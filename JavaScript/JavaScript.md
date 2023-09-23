@@ -544,3 +544,90 @@ console.log(
 );
 ```
 
+
+
+### 연산자 마무리
+
+?? 병합 연산자
+
+* null과 undefined을 대체할 때 사용하는 연산자
+  * 즉, || 연산자보다 엄격하게 적용됨을 알 수 있다.
+  * 예를 들어, let x = a || b에서, a의 값이 falsy이면 (즉, null 또는 undefined 이외에 0이나 '' 등) b의 값을 x에 할당하는 방식보다 엄격하다고 할 수 있다.
+
+```javascript
+let a = false;
+let b = 0;
+let c = '';
+let d = null;
+let e;
+
+//false, 0, '', 기본값, 기본값
+console.log(
+  a ?? '기본값',
+  b ?? '기본값',
+  c ?? '기본값',
+  d ?? '기본값',
+  e ?? '기본값',
+);
+
+//기본값, 기본값, 기본값, 기본값, 기본값
+console.log(
+  a || '기본값',
+  b || '기본값',
+  c || '기본값',
+  d || '기본값',
+  e || '기본값',
+);
+
+
+let baby1 = '홍길동';
+let baby2; // 아직 이름을 짓지 못함
+
+const nameTag1 = baby1 ?? '1번 아기';
+const nameTag2 = baby2 ?? '2번 아기';
+
+console.log(nameTag1, nameTag2); //홍길동, 2번 아기
+//nameTag2의 경우, baby2 변수의 데이터가 undefined이기 때문에, ?? 연산자의에 의해 '2번 아기' 로 대체가 되었다 
+```
+
+
+
+병합 할당 연산자들 예시
+
+```javascript
+let x = 0;
+let y = '';
+let z = null;
+
+x ||= 100;
+y &&= '있어야 바뀜';
+z ??= '기본값';
+
+console.log(x, y, z); //100, '', 기본값
+```
+
+
+
+ 쉼표 연산자
+
+```javascript
+let x = 1, y = 2, z = 3;
+console.log(x, y, z);
+
+// 마지막으로 실행한 것 반환
+//12가 반환된다.
+console.log(
+  (++x, y += x, z *= y)
+);
+
+//아래의 결과는 2,4,12가 반환된다.
+let x = 1, y = 2, z = 3;
+console.log(x, y, z);
+
+// 마지막으로 실행한 것 반환
+//12가 반환된다.
+console.log(
+  (++x, y += x, z *= y)
+);
+```
+

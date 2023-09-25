@@ -631,3 +631,354 @@ console.log(
 );
 ```
 
+
+
+### 객체와 배열 미리 보기
+
+원시타입이 아닌 모든 데이터는 근본적으로 "객체"
+
+
+
+객체의 정의
+
+* 복합적인 정보를, 프로퍼티로 저장하는 자료형
+
+  * 즉, key-value 조합으로 저장하는 자료형이다.
+
+    ```javascript
+    const person1 = {
+      name: '김철수',
+      age: 25,
+      married: false
+    };
+    
+    console.log(typeof person1); // object
+    console.log(person1); // {name: '김철수', age: 25, married: false}
+    ```
+
+    
+
+* const로 선언한 객체 역시, 프로퍼티를 수정할 수는 있다.
+
+  * 왜냐하면, 프로퍼티를 수정하더라도, 결국 객체의 메모리 주소는 동일하기 때문이다.
+    * (내 생각 - 확인 요망) 정확히는, 객체의 메모리 시작 주소를 저장하기 때문에(이 사실을 확인해야 함), 객체에 프로퍼티를 추가하는 것 역시 가능한 것 같다.
+
+  * 다만, 아예 새로운 객체로 재선언은 불가.
+
+* 특정 키가 객체에 포함되어있는지 확인할 수 있다.
+
+  * 해당 키가 존재하지 않으면, undefined를 반환한다.
+
+```javascript
+const person1 = {
+  name: '김철수',
+  age: 25,
+  married: false
+};
+
+//김철수, 25, false
+console.log(
+  person1.name,
+  person1.age,
+  person1.married
+);
+
+//위의 log의 결과물과 완전히 일치한다. (김철수, 25, false)
+//아래의 프로퍼티 접근법은, key가 숫자일 때에도 가능하다.
+console.log(
+  person1['name'], // 속성명을 string으로
+  person1['age'],
+  person1['married'],
+);
+
+//아래의 결과물은 undefined가 출력된다.
+console.log(person1.birthdate);
+console.log(person1['job']);
+
+// 특정 프로퍼티의 값 변경
+person1.age = 26;
+person1['married'] = true
+
+console.log(person1);
+
+//프로퍼티 값 수정
+// 특정 프로퍼티의 값 변경
+person1.age = 26;
+person1['married'] = true
+
+console.log(person1);
+
+// 새 프로퍼티 추가
+person1.job = 'developer';
+person1['bloodtype'] = 'AB'
+
+//{name: '김철수', age: 26, married: true, job: 'developer', bloodtype: 'AB'}
+console.log(person1);
+```
+
+
+
+
+
+배열의 정의
+
+* 객체의 일종이다
+  * length 프로퍼티와, index 프로퍼티로 이루어져 있는 특수한 객체이다.
+    * 따라서, index 프로퍼티로 접근한 값 역시 원칙적으로 모든 자료형이 가능하므로, 배열 내부에는 각기 다른 자료형의 요소로 선언이 가능한 것이다.
+
+  * 키가 숫자로 되어있다면, winners.0이 아닌, winners[0] 으로 접근한다.
+    * 왜냐하면, 식별자 규칙에 어긋나는 키이기 때문.
+
+* 역시, const로 선언한 배열도, 아예 다른 배열로 재선언하는 것은 불가능
+  * 그러나, 해당 배열 내부의 특정 요소를 수정하거나, 추가하는 것은 가능
+* 배열 범주 너머로 접근 시 undefined 반환
+  * (내 생각) 이는 추후, 배열의 길이를 늘렸을 때 메모리 할당이 가능함을 나타내기 위해서 null이나 empty가 아닌 undefined가 반환된다고 생각함!
+
+* 일반적인 프로그래밍 언어에서의 배열의 정의와는 달리, HashTable로 구현되어 있으며 이로 인해 탐색, 추가, 삭제 등에서 일반적인 의미의 배열과 성능 차이가 발생한다.
+
+```javascript
+const winners = [12, 592, 7, 48];
+const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+
+// 자료형에 관계없이 한 배열에 넣을 수 있음
+const randoms = ['홍길동', -24, true, null, undefined];
+
+console.log(typeof winners); //object
+console.log(winners, weekdays, randoms); //12, '일', null
+```
+
+```javascript
+const numbers = [1, 2, 3];
+
+// 특정 위치의 값 수정
+numbers[2] = 5;
+
+console.log(numbers); //[1,2,5]
+
+// 맨 끝에 값 추가
+numbers.push(10);
+
+console.log(numbers); //[1,2,5,10]
+
+//배열의 범주를 넘어서면 undefined를 반환
+const winners = [12, 592, 7, 48];
+console.log(winners[winners.length]); //undefined
+
+//배열은 모든 자료형을 요소로 가질 수 있으므로, 아래의 형태 또한 허용된다.
+const groups = [[1, 2], [3, 4, 5], [6, 7, 8, 9]];
+
+const weapons = [
+  { name: '롱소드', damage: 30, design: ['화룡검', '뇌신검'] },
+  { name: '활', damage: 12 },
+  { name: '워해머', damage: 48 },
+];
+
+console.log(groups[1][2]);
+console.log(weapons[2].damage);
+console.log(weapons[0].design[0]);
+
+//객체 내부에 value의 자료형으로서 배열, 객체로 오는 것도 가능하다.
+const person2 = {
+  name: '김달순',
+  age: 23,
+  languages: ['Korean', 'English', 'French'],
+  education: {
+    school: '한국대',
+    major: ['컴퓨터공학', '전자공학'],
+    graduated: true,
+  }
+};
+
+console.log(person2.languages[2]);
+console.log(person2.education.graduated);
+```
+
+
+
+
+
+<u>** 생각해 볼 사안</u>
+
+* <u>일반 프로그래밍 언어에서의 배열의 정의와 javaScript에서의 배열의 정의 차이</u>
+* <u>배열을 추가할 때에도</u> 
+* <u>undefined가 언제 반환되는지, 그리고 null과 empty와의 차이점.</u>
+
+
+
+### 원시 타입 vs 참조 타입
+
+primitive 타입은, 값에 의한 복사이다. (copy by value)
+
+=> 따라서, 데이터 영역에는 값 그 자체가 저장되며, 사용자가 특정 변수의 값을 바꿀 때, 데이터 영역의 다른 곳에 바꾼 값이 할당되며 해당 데이터를 가리키게 된다.
+
+```javascript
+let number1 = 1;
+let string1 = 'ABC';
+let bool1 = true;
+
+let number2 = number1; //number2에도 1이 저장이 되나, number1에 할당된 값을 2로 바꾼다고 해서 number2가 영향을 받지는 않는다.
+let string2 = string1;
+let bool2 = bool1;
+
+number2 = 2;
+string2 = '가나다';
+bool2 = false;
+
+console.log('~1:', number1, string1, bool1); //1, ABC, true
+console.log('~2:', number2, string2, bool2); //2, 가나다, false
+```
+
+
+
+반면 reference 타입은, 데이터 영역에 주소값을 저장한다.
+
+=> 해당 주소값에 해당하는 객체의 각 요소는, "힙 영역"에 저장된다.
+
+=> 각 요소에 해당하는 실제 데이터(primitive type이라고 가정)은 "데이터 영역"에 저장된다.
+
+(만약 실제 데이터가 reference type이라고 하면, 데이터 영역에는 주소값이 저장될 것이며 위의 메커니즘과 동일할 것이다.)
+
+```javascript
+const obj1 = {
+  num: 1, str: 'ABC', bool: true
+};
+const obj2 = obj1;
+// obj2 = {}; // ⚠️ 오류
+
+console.log('obj1:', obj1); // {num: 1, str: 'ABC', bool: true}
+console.log('obj2:', obj2); // {num: 1, str: 'ABC', bool: true}
+
+// ⭐️ const임에도 내부 값은 변경 가능함 주목
+// 내부 변경 방지는 이후 배울 Object.freeze 함수로
+obj2.num = 2;
+obj2.str = '가나다';
+obj2.bool = false;
+
+console.log('obj1:', obj1); // {num: 2, str: '가나다', bool: false}
+console.log('obj2:', obj2); // {num: 2, str: '가나다', bool: false}
+```
+
+
+
+<u>의문) 힙 영역에서의, "각 요소의 변수들은", 변수 영역에 저장되는 것이 아니라, 별도의 영역(힙 영역)에 저장된다고 보는 것이 맞는지?</u>
+
+
+
+## 섹션3. 제어문
+
+### 블록문과 스코프
+
+블록 내부 또다른 블록에서, 동명의 변수를 선언할 수 있다.
+
+=> 선언해서 사용 시, 해당 변수가 우선적으로 적용됨
+
+(또한, 블록 바깥의 변수의 값을 바꾸는 역할 또한 할 수 있음)
+
+```javascript
+{
+  const x = 'Hello';
+  let y = 'world!';
+  console.log(x, y);
+}
+
+//아래의 결과는 에러가 발생
+console.log(x);
+console.log(y);
+
+const xx = 0;
+let yy = 'Hello!';
+let zz = 300;
+console.log(xx, yy, zz); //0, 'Hello!', 300
+
+{
+  const xx = 1; // 💡 블록 안에서는 바깥의 const 재선언 가능
+  let yy = '안녕하세요~';
+  zz = 400;	
+    
+  console.log(xx, yy, zz); //1, '안녕하세요~', 400
+  // ⚠️ const, let을 빼먹으면 재선언이 아니라 바깥것의 값을(변수면) 바꿈!
+}
+
+//블록을 벗어났으므로, xx와 yy는 원래 블록 바깥에 정의된 값을 갖게 된다.
+// => 이를 scope chain이라고 한다.
+console.log(xx, yy, zz); //0, 'Hello', 400
+```
+
+
+
+스코프 체인과 메모리에서의 관점
+
+```javascript
+//스코프 체인 예시
+let a = 0;
+let b = 1;
+let c = 2;
+console.log('시점 1:', a, b, c);
+
+{
+  let a = 'A';
+  let b = 'B'
+  console.log('시점 2:', a, b, c);
+
+  {
+    let a = '가'
+    console.log('시점 3:', a, b, c);
+  }
+
+  console.log('시점 4:', a, b, c);
+}
+
+console.log('시점 5:', a, b, c);
+```
+
+위 현상을 메모리에서 풀어보자면, 전역 변수(데이터 영역)과 지역 변수(스택 영역)의 관점으로 바라볼 수 있게 된다.
+
+* 동일한 변수가 데이터 영역과 스택 영역에 동시에 선언이 된다면, (해당 스코프 내라면) 스택 영역 내의 변수가 우선적으로 활용된다
+
+* 되도록이면, 스택 영역에 변수와 상수를 선언해서 메모리를 절약하는 것이 권장된다.
+
+
+
+### if/else
+
+if ~ else 형식으로 특정 조건에 맞는 데이터면 그에 따른 코드가 적용되도록 작성할 수 있다
+
+=> return을 사용해도 된다.
+
+```javascript
+// if~else 문 예시
+const x = 22;
+
+if (x % 4) {
+  if (x % 2) {
+    console.log('홀수입니다.');
+  } else {
+    console.log('짝수입니다.');
+  }
+} else {
+  console.log('4의 배수입니다.');
+}
+```
+
+```javascript
+//return과 function을 활용한 if~else 문 예시
+function evalNum () {
+  const x = 21;
+
+  if (x % 2) {
+    console.log('홀수입니다.');
+    return;
+  }
+
+  if (x % 4) {
+    console.log('짝수입니다.');
+    return;
+  }
+
+  console.log('4의 배수입니다.');
+}
+
+evalNum();
+console.log('블록문 바깥');
+```
+

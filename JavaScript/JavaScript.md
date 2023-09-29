@@ -982,3 +982,714 @@ evalNum();
 console.log('블록문 바깥');
 ```
 
+
+
+### switch
+
+특정 변수에 대한 조건이 여러개일 때 유용하다.
+
+```javascript
+// 💡 참고: 객체를 사용한 방법
+const direction = 'north'
+
+//??를 활용하여, direction에 지정된 데이터 외의 값이 들어오게 되는 경우, directionKor을 '무효' 로 출력한다.
+const directionKor = {
+  north: '북',
+  south: '남',
+  east: '동',
+  west: '서'
+}[direction] ?? '무효'
+
+console.log(directionKor);
+```
+
+```javascript
+const month = 1;
+let season = '';
+
+switch (month) {
+  case 1: case 2: case 3:
+    season = '1분기'; break;
+
+  case 4: case 5: case 6:
+    season = '2분기'; break;
+
+  case 7: case 8: case 9:
+    season = '3분기'; break;
+
+  case 10: case 11: case 12:
+    season = '4분기'; break;
+
+  default: 
+    season = '잘못된 월입니다.';
+}
+
+console.log(season);
+```
+
+
+
+### for 루프
+
+```javascript
+//백틱 표현 활용
+
+for (let i = 1; i <= 9; i++) {
+  for (let j = 1; j <= 9; j++) {
+    console.log(`${i} * ${j} = ${i * j}`);
+  }
+}
+
+// 1 * 1 = 1 
+// 1 * 2 = 2
+// ....
+// 9 * 9 = 81 
+```
+
+```javascript
+//무한 루프
+let x = 0;
+
+for (;;) {
+  console.log(x);
+}
+
+console.log('출력 안됨');
+```
+
+```javascript
+//for문 응용
+for (
+  let x = true, y = 0, z = 0;
+  y * z < 10;
+  x = !x, x ? y++ : z++
+) {
+  console.log(y, z);
+}
+
+// 0 0
+// 0 1
+// 1 1
+// 1 2
+// ...
+// 3 3
+```
+
+```javascript
+//객체에 대해 요소들을 모두 출력하는 코드.
+//객체에 대해 for문을 적용 시, 객체 각 요소의 key값들을 호출하게 된다.
+const lunch = {
+  name: '라면',
+  taste: '매운맛',
+  kilocalories: 500,
+  cold: false
+}
+
+for (const key in lunch) { // 💡 변할 것이 아니므로 const 사용
+  console.log(key, ':', lunch[key])
+}
+
+// name: '라면',
+// taste: '매운맛',
+// kilocalories: 500,
+// cold: false
+```
+
+for~of 구문 => iterable 객체에 대해 사용되며, 해당 객체의 요소를 모두 꺼낸다.
+
+```javascript
+const list = [1, '가나다', false, null];
+
+for (const item of list) {
+  console.log(item);
+}
+for (const el of list) {
+  console.log(el);
+}
+
+// 문자열 역시 이터러블이므로 사용 가능
+for (const letter of '안녕하세요~') {
+  console.log(letter);
+}
+```
+
+```javascript
+const numbers1 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const numbers2 = [];
+
+for (let num of numbers1) {
+  num++; // ⚠️ 복사된 값. let 사용 주목
+  numbers2.push(num + 1);
+}
+console.log(numbers1, numbers2);
+
+// [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+// [3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+```
+
+continue와 break 활용
+
+```javascript
+for (let i = 1; i <= 10; i++) {
+  if (i % 3 === 0) continue;
+  console.log(i);
+}
+
+console.log('for 루프 종료');
+```
+
+```javascript
+for (let i = 1; i <= 10; i++) {
+  if (i === 5) break;
+  console.log(i);
+}
+
+console.log('for 루프 종료');
+```
+
+
+
+### while과 do while
+
+do while => 일단 do 구문을 무조건 시행한 후, while 조건문을 따져서 do구문을 반복 실행할지 여부를 결정
+
+```javascript
+let x = 12;
+
+do {
+  console.log(x++);
+} while (x < 10);
+
+//12
+```
+
+
+
+## 섹션4. 함수
+
+### 함수의 의미와 사용법
+
+function의 반환값이 명시되어 있지 않다면, undefined를 반환한다.
+
+
+
+호이스팅 
+
+* 변수, 상수는 호이스팅이 되지 않음
+
+* 함수는 "선언 방법에 따라 "호이스팅이 가능
+
+  * 왜냐하면, js가 실행될 때, 함수부터 먼저 쭉 찾아서 변수들로 등록하기 때문
+
+  * ```javascript
+    // 함수는 실행문보다 나중에 정의하는 것이 가능
+    // 변수나 상수는 불가능! (var 제외)
+    console.log(add(2, 7));
+    
+    function add (x, y) {
+      return x + y;
+    }
+    ```
+
+  * 함수도 값이고, 객체이기 때문에 아래와 같이 선언할 수 있다.
+
+    ```javascript
+    const subt = function (x, y) {
+      return x - y;
+    }
+    
+    console.log(subt(7, 2));
+    ```
+
+  * 기존 함수 재정의
+
+  * ```javascript
+    function add (x, y) {
+      return x + y;
+    }
+    
+    console.log(add(2, 7));
+    ```
+
+  * ```javascript
+    // 💡 기존의 함수를 재정의하는것도 가능
+    add = function (x, y) {
+      console.log(`${x}와 ${y}를 더합니다.`);
+      console.log(`결과는 ${x + y}입니다.`);
+      return x + y;
+    }
+    
+    console.log(add(2, 7));
+    ```
+
+  * 화살표 함수로도 정의 가능
+
+    ```javascript
+    // 인자가 하나일 때는 괄호 없이 선언 가능
+    const pow = x => x ** 2;
+    console.log(pow(3));
+    ```
+
+* 호이스팅은 "함수 선언" 형태로 정의된 것만 가능하다.
+
+  * 왜냐하면, 위 방법으로 인한 함수 생성의 시점은, 엔진 코드 실행 이전에 미리 생성되기 때문이다.
+
+
+* <u>*(나의 개인적인 의문)*</u>
+
+  * <u>*함수가 왜 "1급 객체" 여야만 하는지를 파악하기 위해서 구글링을 해 보았는데, 이는 프로토타입을 알아야 제대로 파악이 가능할 것 같다.*</u>
+
+    => 
+
+
+
+### 일급 객체
+
+js의 함수는 "변수"와 같이 다루는 개념이 존재한다.
+
+=> 1급 객체로서 다룬다.
+
+* 따라서, 상수나 변수에 할당될 수 있다.
+
+  ```javascript
+  function isOddNum (number) {
+    console.log(
+      (number % 2 ? '홀' : '짝')
+      + '수입니다.'
+    );
+    return number % 2 ? true : false;
+  };
+  
+  const checkIfOdd = isOddNum; // 뒤에 괄호 없음 유의
+  
+  console.log(checkIfOdd(23));
+  
+  // 홀수입니다.
+  // true
+  ```
+
+* 다른 함수의 인자로서도 전달될 수 있다.
+
+* 다른 함수의 결과값으로서 반환될 수 있다.
+
+* 심지어, 어떤 객체의 키에 상응하는 value로도 받을 수 있다.
+
+  * ```javascript
+    let person = {
+      name: '홍길동',
+      age: 30,
+      married: true,
+      introduce: function (formal) {
+        return formal
+        ? '안녕하십니까. 홍길동 대리라고 합니다.'
+        : '안녕하세요, 홍길동이라고 해요.';
+      }
+    };
+    
+    console.log(person.introduce(true));
+    console.log(person.introduce(false));
+    ```
+
+  * 객체의 다른 프로퍼티에 접근할 때, this를 사용
+
+    ```javascript
+    let person = {
+      name: '홍길동',
+      age: 30,
+      married: true,
+      introduce: function () {
+        return `저는 ${this.name}, ${this.age}살이고 `
+        + `${this.married ? '기혼' : '미혼'}입니다.`;
+      }
+    }
+    
+    console.log(person.introduce());
+    ```
+
+    참고로 아래의 경우에는 this 참조를 활용할 수 없다.
+
+    (할 수 있기는 한데, name과 age와 married 프로퍼티를 읽어들이지 못한다.)
+
+    ```javascript
+    let person = {
+      name: '홍길동',
+      age: 30,
+      married: true,
+      introduce: () => {
+        return `저는 ${this.name}, ${this.age}살이고 `
+        + `${this.married ? '기혼' : '미혼'}입니다.`;
+      }
+    }
+    
+    console.log(person.introduce());
+    ```
+
+    => (내 생각) 이 경우에는 메서드가 먼저 메모리에 실리고 아니고의 차이일 거 같은데... 음...
+
+  * 배열의 요소로도 받을 수 있다.
+
+  * ```javascript
+    let arithmetics = [
+      (a, b) => a + b,
+      (a, b) => a - b,
+      (a, b) => a * b,
+      (a, b) => a / b
+    ];
+    
+    for (arm of arithmetics) {
+      console.log(arm(5, 3));
+    }
+    ```
+
+
+
+고차함수, 콜백함수
+
+```javascript
+let list = [1, 2, 3, 4, 5];
+
+function doInArray (array, func) {
+  for (item of array) {
+    func(item);
+  }
+}
+
+// console.log - console이란 객체에서 log란 키에 할당된 함수
+
+// doInArray => "고차함수" (전달받는 함수)
+// console.log => "콜백함수" (전달하는 함수)
+doInArray(list, console.log);
+```
+
+```javascript
+function doNTimes (func, repeat, x, y) {
+  let result = x;
+  for (i = 0; i < repeat; i++) {
+    result = func(result, y);
+  }
+  return result;
+}
+
+console.log(
+  doNTimes((x, y) => x * y, 3, 5, 2),
+  doNTimes((x, y) => x / y, 3, 5, 2),
+);
+```
+
+```javascript
+// calculate
+const add = (a, b) => a + b;
+const subtract = (a, b) => a - b;
+const multiply = (a, b) => a * b;
+
+// evaluate
+const isOdd = (number) => !!(number % 2);
+const isPositive = (number) => number > 0;
+
+//아래의 "인자로 전달된 함수"인 calc와 eval은, 상수나 변수에 할당된 함수가 아니기 때문에, "익명 함수" 라고 불리운다.
+function calcAndEval (calc, eval, x, y) {
+  return eval(calc(x, y));
+}
+
+console.log(
+  calcAndEval(add, isOdd, 5, 7),
+  calcAndEval(subtract, isPositive, 5, 7),
+  calcAndEval(multiply, isOdd, 5, 7)
+);
+```
+
+
+
+결과값으로서 함수를 반환받는 경우 역시 존재
+
+```javascript
+function getIntroFunc (name, formal) {
+  return formal
+  ? function () {
+    console.log(`안녕하십니까, ${name}입니다.`);
+  } : function () {
+    console.log(`안녕하세요~ ${name}이라고 해요.`);
+  }
+}
+
+const hongIntro = getIntroFunc('홍길동', true);
+const jeonIntro = getIntroFunc('전우치', false);
+```
+
+```javascript
+// hongIntro와 jeonIntro 에 "함수"가 할당되었음을 인지하자
+hongIntro();
+jeonIntro();
+```
+
+
+
+커링
+
+* 어떤 함수에서 필요한 인자보다 적은 수의 인자를 받으면, 나머지 인자를, 인자로 받는 다른 함수를 반환
+
+  * 그러고 나서 추후에 나머지 인자를 받으면, 반환받은 함수에다가 인자를 넣으면 될 것이다.
+
+  ```javascript
+  // 기존의 코드
+  function addMultSubt (a, b, c, d) {
+    return (a + b) * c - d;
+  }
+  
+  const addMultSubt2 = (a, b, c, d) => (a + b) * c - d;
+  
+  console.log(
+    addMultSubt(2, 3, 4, 5),
+    addMultSubt2(2, 3, 4, 5),
+  );
+  ```
+
+  ```javascript
+  // ⭐ 커링으로 작성된 함수
+  function curryAddMultSubt (a) {
+    return function (b) {
+      return function (c) {
+        return function (d) {
+          return (a + b) * c - d;
+        }
+      }
+    }
+  }
+  
+  const curryAddMultSubt2 = a => b => c => d => (a + b) * c - d;
+  ```
+
+  ```javascript
+  const curryAddMultSubtFrom2 = curryAddMultSubt(2);
+  const curryMultSubtFrom5 = curryAddMultSubt(2)(3);
+  const currySubtFrom20 = curryAddMultSubt(2)(3)(4);
+  ```
+
+
+
+### 매개변수
+
+* 매개변수 갯수를 넘어가는 인수를 받을 때, 오류가 나지 않고 넘어가는 인수에 대해서는 무시한다.
+
+  * 매개변수 자체에 대해서, default 값을 설정할 수도 있다.
+
+  * 나의 의문) 아래의 출력 결과를 볼 때, console.log()의 매개변수를 모두 실행 후, 매개변수에 해당하는 값을 console에 출력하는 것으로 보임.
+
+    ```javascript
+    function add(a = 2, b = 4) {
+      console.log(`${a} + ${b}`);
+      return a + b;
+    }
+    
+    console.log(
+      add(),
+      add(1),
+      add(1, 3)
+    );
+    
+    // 2+4
+    // 1+4
+    // 1+3
+    // 6 5 4 (console.log의 결과물)
+    
+    ```
+
+* 함수 호출 시 전달된 모든 인수들은 "배열" 처럼 동작한다. (매개변수 갯수를 넘어가는 인수가 전달되어도, 모두 "배열" 처럼 동작한다.)
+
+  * ```javascript
+    //함수 호출 시, 전달된 모든 인수들은 arguments 라는 벼ㅕㄴ수로 받는다.
+    function add(a, b) {
+      console.log('1.', arguments);
+      console.log('2.', arguments[0]);
+      console.log('3.', typeof arguments);
+      return a + b;
+    }
+    
+    console.log(
+      '4.', add(1, 3, 5, 7)
+    );
+    
+    // 1. Arguments(4) [100, 3, 5, 7, callee: ƒ, Symbol(Symbol.iterator): ƒ]
+    // 2. 1
+    // 3. object
+    // 4. 4
+    ```
+
+  * ```javascript
+    //arguments 가 iterable 하므로, 아래의 식도 가능하다.
+    //2개를 초과해서 4개의 인자를 받아도, 일단 arguments는 4개의 인자를 모두 담는다. 
+    function add(a, b) {
+      for (const arg of arguments) {
+        console.log(arg);
+      }
+      return a + b;
+    }
+    
+    console.log(
+      add(1, 3, 5, 7)
+    );
+    
+    //1
+    //3
+    //5
+    //7
+    //4
+    ```
+
+  전달받은 모든 인수를, 평균값을 내기 (숫자만 filtering 해서!)
+
+  ```javascript
+  //function을 정의할 때에는 인자가 없어도 된다고 정의하여도, arguments를 통해 인자를 전달받을 수 있다.
+  function getAverage() {
+    let result = 0;
+    for (const num of arguments) {
+      result += num;
+    }
+    return result / arguments.length;
+  }
+  
+  console.log(
+    getAverage(1, 4, 7),
+    getAverage(24, 31, 52, 80)
+  );
+  
+  // 4
+  // 46.75
+  ```
+
+  ```javascript
+  // 💡 타입에 안전한 버전
+  // 전달받은 인자 중, 숫자인 인자에 대해서만 자동으로 계산하게 해 줌
+  function getAverage() {
+    let result = 0, count = 0;
+    for (const num of arguments) {
+      if (typeof num !== 'number') continue;
+      result += num;
+      count++;
+    }
+    return result / count;
+  }
+  
+  console.log(
+    getAverage(2, '가', 8, true, 5)
+  );
+  ```
+
+  
+
+(내 생각) 함수를 선언한 경우에만, 넘겨받은 인수에 대해서 arguments로 받을 수 있는 것처럼 보임.
+
+=> 일단, 화살표로 정의된 함수에 대해서는, arguments를 사용할 수 없다.
+
+```javascript
+// ♻️ 새로고침 후 실행
+// 아마, 화살표로 정의된 함수는, 넘겨받은 인자를 arguments에 바인딩되지 않는다는 점을 활용한 거 같다. (아직까지는 내 생각)
+const add = (a, b) => a + b;
+const sub = (a, b) => a - b;
+const mul = (a, b) => a * b;
+const div = (a, b) => a / b;
+
+function combineArms () {
+  return (x, y) => {
+    let result = x;
+    //combineArms()에 넘겨받은 인자들에 대해서 반복문 적용
+    for (const arm of arguments) {
+      if (typeof arm !== 'function') continue;
+      result = arm(result, y);
+    }
+    return result;
+  }
+}
+
+const add_mul = combineArms(add, mul, 1, true);
+const add_mul_sub = combineArms(add, mul, sub);
+const add_mul_sub_div = combineArms(add, mul, sub, div);
+
+// 💡 익명 함수 사용됨
+const add_mul_sub_div_pow
+  = combineArms(add, mul, sub, div, (x, y) => x ** y);
+```
+
+```javascript
+console.log(
+  add_mul(8, 3),
+  add_mul_sub(8, 3),
+  add_mul_sub_div(8, 3),
+  add_mul_sub_div_pow(8, 3)
+);
+
+// 33
+// 30
+// 10
+// 1000
+```
+
+
+
+rest parameters
+
+* 매개변수의 맨 마지막 인자로만 사용이 가능하며, "수가 정해지지 않은" 매개변수들을 받을 떄 활용
+
+  * rest parameters는 실제 배열 타입이다.
+
+* ```javascript
+  console.log(
+    '3.',
+    classIntro(3, '김민지', '영희', '철수', '보라')
+  ); // 호이스팅
+  
+  function classIntro (classNo, teacher, ...children) {
+    console.log('1.', children);
+    console.log('2.', arguments);
+  
+    let childrenStr = '';
+    for (const child of children) {
+      if (childrenStr) childrenStr += ', ';
+      childrenStr += child;
+    }
+    return `${classNo}반의 선생님은 ${teacher}, `
+      + `학생들은 ${childrenStr}입니다.`
+  }
+  
+  // 1. (3) ['영희', '철수', '보라']
+  // 2. Arguments(5) [3, '김민지', '영희', '철수', '보라', callee: (...), Symbol(Symbol.iterator): ƒ]
+  // 3. 3반의 선생님은 김민지, 학생들은 영희, 철수, 보라입니다.
+  
+  ```
+
+* ```javascript
+  // 사칙연산을 적용하는 코드
+  
+  const add = (a, b) => a + b;
+  const sub = (a, b) => a - b;
+  const mul = (a, b) => a * b;
+  const div = (a, b) => a / b;
+  
+  function doMultiArms (x, y, ...arms) {
+    let result = x;
+    for (const arm of arms) {
+      if (typeof arm !== 'function') continue;
+      result = arm(result, y);
+    }
+    return result;
+  }
+  
+  console.log(
+    doMultiArms(8, 3, add, mul, 1, true),
+    doMultiArms(8, 3, add, mul, sub),
+    doMultiArms(8, 3, add, mul, sub, div),
+    doMultiArms(8, 3, add, mul, sub, div, (x, y) => x ** y)
+  );
+  ```
+
+
+
+<u>개인적으로 내가 가졌던 궁금한 사항</u>
+
+* <u>왜 화살표 함수는 arguments를 활용할 수 없을까?</u>
+
+  => 아주 정확한 이유는 아직 모르지만, 일반함수로 정의했을 때는 Arguments가 null이나, 화살표로 함수를 정의 시, Arguments에 접근이 불가능함을 알 수 있다.
+
+  => 블로그의 설명대로 따르면, 화살표로 정의된 함수는, 넘겨받은 인자들을 Arguments에 바인딩하지 않는다고 한다.
+
+  * 출처 : https://velog.io/@ansrjsdn/%EC%99%9C-%ED%99%94%EC%82%B4%ED%91%9C-%ED%95%A8%EC%88%98%EC%97%90%EB%8A%94-arguments%EA%B0%80-%EC%97%86%EC%9D%84%EA%B9%8C

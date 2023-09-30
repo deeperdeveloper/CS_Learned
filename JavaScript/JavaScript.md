@@ -1693,3 +1693,173 @@ rest parameters
   => 블로그의 설명대로 따르면, 화살표로 정의된 함수는, 넘겨받은 인자들을 Arguments에 바인딩하지 않는다고 한다.
 
   * 출처 : https://velog.io/@ansrjsdn/%EC%99%9C-%ED%99%94%EC%82%B4%ED%91%9C-%ED%95%A8%EC%88%98%EC%97%90%EB%8A%94-arguments%EA%B0%80-%EC%97%86%EC%9D%84%EA%B9%8C
+
+
+
+### 함수 더 알아보기
+
+outer 함수 내부에서만 또다른 함수가 쓰일 때, 중첩 함수를 정의할 수 있다.
+
+```javascript
+function outer () {
+  const name = '바깥쪽'
+  console.log(name, '함수');
+
+  function inner () {
+    const name = '안쪽'
+    console.log(name, '함수');
+  }
+  inner();
+}
+
+outer();
+```
+
+
+
+** <u>내가 가졌던 의문</u>
+
+* 위처럼 중첩해서 함수를 정의하는 것과, 중첩하지 않고 정의하는 것의 차이점이 있을까? (즉, outer() 와 inner() 를 별도의 함수로서 동일한 스코프에서 정의한다면?)
+
+  => 클린코드적 관점이랑, 성능적 관점에서 생각해볼 수 있다.
+
+  * 클린코드적 관점
+
+    * 중첩해서 함수를 정의한다면, inner()는 outer()가 호출될 때에만 쓰임을 명시적으로 드러내므로, 중첩하지 않고 정의할 때보다 코드의 질이 올라간다
+
+  * 성능적 관점
+
+    * 함수 역시 "값" 임에 초점을 두자
+
+      * 그렇다면, 위의 경우처럼 중첩을 한다면, inner() 함수 객체는 outer()가 호출될때마다 생성되고, 호출이 끝나면 파괴된다.
+      * 반면, 중첩을 하지 않고 동일한 스코프에서 inner() 와 outer()를 정의한다면, outer() 함수 객체는 단 1번 생성되며 해당 객체가 계속 사용된다.
+
+    * 따라서, 이론적으로는 중첩하지 않고, 동일한 스코프에서 별도의 함수로 선언하는 것이 성능 상 더 좋을 수 있다
+
+      => 오래전에는 그러했으나, 요즘에는 자바스크립트 엔진 내부적으로 중첩된 함수에 대해 최적화 로직이 적용되어 있다고 한다.
+
+      => 따라서, 중첩하지 않았을 경우랑 성능 상 별 차이가 없다고 한다.
+
+  * 출처 : https://siyoon210.tistory.com/162
+
+
+
+재귀 함수
+
+```javascript
+function upto5 (x) {
+  console.log(x);
+  if (x < 5) {
+    upto5(x + 1);
+  } else {
+    console.log('- - -');
+  };
+}
+
+upto5(1);
+upto5(3);
+upto5(7);
+
+// 1
+// 2 
+// 3
+// 4
+// 5 
+// ---
+// 3
+// 4
+// 5
+// ---
+// 7
+// ---
+```
+
+
+
+팩토리얼 재귀 함수
+
+```javascript
+function fact(x) {
+  return x === 0 ? 1 : x * fact(x - 1);
+}
+
+console.log(
+  fact(1),
+  fact(2),
+  fact(3),
+  fact(4)
+)
+
+//1 2 6 24
+```
+
+** 자바스크립트에서는, tail recursion을 활용해서 내부적으로 for문을 돌려서 stack frame이 쌓이는 거를 방지하는 기술은 적용되어 있지 않다고 한다.
+
+
+
+IIFE
+
+* 일회용 함수 개념(함수 이름은 익명임)
+
+  * 함수를 정의함과 동시에 즉시 시행할 때 활용
+
+  ```javascript
+  (function () {
+    console.log('IIFE');
+  })();
+  ```
+
+  
+
+* 아래의 경우 사용된다.
+
+  * function의 경우, 1회성으로 사용되므로 아래와 같이 정의했다.
+
+  ```javascript
+  const initialMessage = (function () {
+    // ⚠️ var를 사용함에 주목
+    var month = 8;
+    var day = 15;
+    var temps = [28, 27, 27, 30, 32, 32, 30, 28];
+    var avgTemp = 0;
+    for (const temp of temps) {
+      avgTemp += temp
+    }
+    avgTemp /= temps.length;
+  
+    return `${month}월 ${day}일 평균기온은 섭씨 ${avgTemp}도입니다.`;
+  })();
+  
+  console.log(initialMessage);
+  console.log(month); //month를 var로 선언하였기에, 출력이 된다.
+  ```
+
+  => month는 블록 바깥에서 활용되지 않는다. (* 아래의 경우는, var로 선언 시, 블록 바깥에서도 해당 변수가 사용이 가능하다는 문제점이 있다.)
+
+
+
+아래의 코드는 블록 내부에서, var로 선언 시 블록 바깥에서 활용 가능하다. (const나 let으로 선언한 경우는 스코프 내에서만 활용이 가능)
+
+```javascript
+let initialMessage;
+
+{
+  const month = 8;
+  const day = 15;
+  const temps = [28, 27, 27, 30, 32, 32, 30, 28];
+  let avgTemp = 0;
+  for (const temp of temps) {
+    avgTemp += temp
+  }
+  avgTemp /= temps.length;
+
+  initialMessage = `${month}월 ${day}일 평균기온은 섭씨 ${avgTemp}도입니다.`;
+};
+
+console.log(initialMessage);
+console.log(month); // 에러 발생한다. 새로고침 후 const를 var로 바꾸고 실행해볼 것.
+```
+
+위처럼 var는 블록 외에서도 사용될 수 있었다는 문제점 때문에, var 사용 시 예전에 불편하게 IIFE를 만들어서 사용했다.
+
+=> 이제는 const와 let을 활용해서 그냥 블록문을 실행하면 된다.

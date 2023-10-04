@@ -1863,3 +1863,454 @@ console.log(month); // 에러 발생한다. 새로고침 후 const를 var로 바
 위처럼 var는 블록 외에서도 사용될 수 있었다는 문제점 때문에, var 사용 시 예전에 불편하게 IIFE를 만들어서 사용했다.
 
 => 이제는 const와 let을 활용해서 그냥 블록문을 실행하면 된다.
+
+
+
+## 섹션5. 객체와 클래스
+
+### 객체의 기본 사용법들
+
+객체의 프로퍼티 접근 시, 식별자 명명 규칙에 벗어난 키라면, [] 로만 접근해야 한다.
+
+```JAVASCRIPT
+const obj = {
+  1: '하나', // 숫자도 객체의 키로는 사용 가능
+  'ab-cd': 'ABCD', // 문자 포함 시 키도 따옴표로 감싸야 함
+  's p a c e': 'Space'
+}
+
+// 아래의 index는, 대괄호 프로퍼티 접근 연산자로만 가능
+console.log(
+  obj[1],
+  obj['ab-cd'],
+  obj['s p a c e']
+);
+
+// ⚠️ 오류 발생
+// console.log(
+//   obj.1,
+//   obj.ab-cd,
+//   obj.s p a c e
+// );
+```
+
+
+
+키는 표현식으로도 정의할 수 있다.
+
+ ```javascript
+let idx = 0;
+const  obj = {
+  ['key-' + ++idx]: `value-${idx}`,
+  ['key-' + ++idx]: `value-${idx}`,
+  ['key-' + ++idx]: `value-${idx}`,
+  [idx ** idx]: 'POWER'
+}
+
+console.log(obj);
+// {27: 'POWER', key-1: 'value-1', key-2: 'value-2', key-3: 'value-3'}
+ ```
+
+
+
+★ 키는, 객체나 배열을 쓸 떄는 주의를 요한다
+
+* 키를 객체로 쓸 경우, (객체의 값에 관계없이) [Object object] 를 키값으로 가진다.
+
+  * 따라서, 아무 객체나 키값으로 지정해도 데이터가 호출이 된다.
+
+* 배열을 객체로 쓸 경우, 내부 요소를 문자열로 치환한 값을 키값으로 가진다.
+
+  * 해당 문자열을 키값으로 하여, value를 조회하면 같은 결과가 나온다.
+
+  (아래의 각 단락은 모두 같은 결과를 나타낸다.)
+
+```javascript
+const objKey = { x: 1, y: 2 };
+const arrKey = [1, 2, 3];
+
+const obj = {
+  [objKey]: '객체를 키값으로',
+  [arrKey]: '배열을 키값으로'
+}
+```
+
+```javascript
+console.log(
+  obj[objKey],
+  obj[arrKey]
+);
+
+// 객체를 키값으로 배열을 키값으로
+```
+
+```javascript
+// ⚠️ ???????
+console.log(
+  obj[{ a: 1, b: 2, c: 3 }], // 내용이 다른 객체
+  obj['1,2,3'], // 문자열
+  obj['1,2,3,4'] // 접근이 되지 않는다.
+);
+
+// 객체를 키값으로 배열을 키값으로 undefined
+```
+
+```javascript
+console.log(
+  obj['[object Object]']
+);
+
+//객체를 키값으로
+```
+
+```javascript
+//obj를 console로 찍으면, 위 현상의 원인을 파악할 수 있다.
+console.log(obj);
+
+//{[object Object]: '객체를 키값으로', 1,2,3: '배열을 키값으로'}
+```
+
+
+
+delete 프로퍼티는, 없는 프로퍼티를 삭제하려고 해도 오류가 발생하지 않는다.
+
+
+
+동적으로 키를 할당할 때는, 반드시 대괄호로 접근해야만 한다.
+
+(obj.key로 접근 시, key 필드로 접근하겠다는 의미이기 때문.)
+
+```javascript
+const product1 = {
+  name: '노트북',
+  color: 'gray',
+  price: 800000
+}
+
+function addModifyProperty (obj, key, value) {
+  // obj.key = value; // ⚠️ 의도와 다른 작업 수행
+  obj[key] = value;
+}
+
+function deleteProperty (obj, key) {
+  // delete obj.key // ⚠️ 의도와 다른 작업 수행
+  delete obj[key];
+}
+```
+
+```javascript
+addModifyProperty (product1, 'inch', 16);
+console.log(product1);
+
+// {name: '노트북', color: 'gray', price: 800000, inch: 16}
+```
+
+```javascript
+addModifyProperty (product1, 'price', 750000);
+console.log(product1);
+
+// {name: '노트북', color: 'gray', price: 750000, inch: 16}
+```
+
+```javascript
+deleteProperty(product1, 'color');
+console.log(product1);
+
+// {name: '노트북', price: 750000, inch: 16}
+```
+
+
+
+ES6 추가 문법
+
+```javascript
+function createProduct (name, price, quantity) {
+  return { name, price, quantity }; //key가 name이고 value도 name에 할당된 데이터를 받아옴
+}
+
+const product1 = createProduct('선풍기', 50000, 50);
+const product2 = createProduct('청소기', 125000, 32);
+
+console.log(product1, product2);
+```
+
+ => 객체 프로퍼티로서, "함수 프로퍼티"를 쓸 때, 축약해서 쓸 수 있다.
+
+=> 그리고 이렇게 객체의 축약 표현으로 정의된 함수 프로퍼티를, "메서드" 라고 부른다.
+
+```javascript
+// 일반 함수 프로퍼티 정의
+const person = {
+  name: '홍길동',
+
+  salutate: function (formal) {
+    return formal
+    ? `안녕하십니까, ${this.name}입니다.`
+    : `안녕하세요, ${this.name}이에요.`;
+  }
+}
+console.log(person.salutate(true));
+```
+
+```javascript
+// ⭐️ 메서드 정의
+const person = {
+  name: '홍길동',
+  
+  salutate (formal) {
+    return formal
+    ? `안녕하십니까, ${this.name}입니다.`
+    : `안녕하세요, ${this.name}이에요.`;
+  }
+}
+console.log(person.salutate(true));
+```
+
+=> 모두 같은 코드이다.
+
+
+
+### 생성자 함수
+
+어떤 함수가 대문자로 시작하면, 이는 관례적으로 "생성자 함수" 이다.
+
+* 생성자 함수는 암묵적으로 this를 반환한다. (new 연산자를 활용했을 경우에 한해서이다!)
+* 생성자 함수 내에서는, 또다른 메서드를 정의할 수 없다. 오직 프로퍼티로서만 정의가 가능
+  * 객체가 아니라 함수이기 때문
+    * (나의 의문) 약간 이유가 애매하기는 하지만, 일단은 애매하게 이해했음을 인지하고 넘어가기.
+* 해당 함수의 this는, 해당 (생성자) 메서드 실행 결과로 인해 곧 생성될 인스턴스를 의미한다.
+  * 참고) 함수를 메서드로서 호출하는지, 일반 함수로서 호출하는지, 생성자 함수로서 호출하는지에 따라 this의 역할이 달라진다
+  * 출처 : https://jeongwle.tistory.com/19 
+
+
+
+생성자 함수도 기본적으로 함수이기 때문에, 원하는 결과를 얻고 싶으면 new를 붙여서 호출해야 한다.
+
+* 그렇지 않으면, return이 보통 지정되어 있지 않으므로 undefined가 반환된다.
+* 또한, 어떠한 함수를 생성자 함수로 활용하려고 하면, return을 쓰면 안 된다.
+  * return을 쓰게 된다면, 해당 함수는 일반 함수로 작동하게 된다. 이는 생성자 함수로서의 의미를 훼손하게 된다.
+
+
+
+
+
+프로토타입
+
+* 클래스 전에 프로토타입이 나왔고, 다른 언어에서 이후 클래스로 대체되었다.
+* js는 "프로토타입" 기반이다.
+  * 생성자 함수로 인스턴스를 생성하더라도, prototype을 통해서 유기적으로 연결되어 있음
+    * 반드시 생성자 함수로 인스턴스를 생성하여야, prototype과 유기적으로 연결된다.
+    * new 연산자를 통해 생성된 객체는, `__proto__` 프로퍼티를 내부적으로 가지며, 이 프로퍼티는, 생성자 함수의 prototype 프로퍼티 값(=객체)를 가리키게 된다.
+  * prototype을 통해 추가한 메서드는 [Prototype] : Object 에 보면 확인할 수 있다.
+
+```javascript
+function YalcoChicken (name, no) {
+  this.name = name;
+  this.no = no;
+  this.introduce = function () {
+    return `안녕하세요, ${this.no}호 ${this.name}점입니다!`;
+  }
+}
+
+const chain1 = new YalcoChicken('판교', 3);
+console.log(chain1);
+```
+
+```javascript
+// 본사에서 새 업무를 추가
+// 프로토타입: 본사에서 배포하는 메뉴얼이라고 이해
+YalcoChicken.prototype.introEng = function () {
+  return `Welcome to Yalco Chicken at ${this.name}!`;
+};
+//이후 YalcoChicken 생성자 함수를 이용하여, new 연산자를 통해 만들어진 객체의 __proto__ 프로퍼티는, YalcoChicken.prototype 의 값(=객체)를 가리키게 된다.
+```
+
+```javascript
+console.log(chain1.introEng());
+console.log(new YalcoChicken('강남', 17).introEng());
+```
+
+=> YalcoChicken.introEng 라고 하게 되면, YalcoChicken 객체 자체에다가 introEng 프로퍼티를 정의하는 것이다.
+
+​	=> 이는 YalcoChicken.prototype.introEng와 완전 다른 개념!
+
+=> 여튼, 프로토타입으로 계속 넘어와서, new YalcoChicken()으로 새로운 객체를 만들게 되면, 해당 객체는 YalcoChicken.prototype의 값(객체)을 가리키게 된다.
+
+=> 이는, `new YalcoChicken().__proto__` 가 가리키는 값과 동일하다.
+
+
+
+
+
+생성자를 만드는 방식(객체 리터럴, 객체 반환 함수, 생성자 함수) 비교
+
+* 생성자 함수를 통해 만들어진 객체는 prototype을 통해 사후관리가 가능하다
+  * 위의 경우, prototype을 통해 추가한 메서드라고 할 수 있다.
+  * 반면, 객체를 직접 반환하거나 객체 리터럴을 통한 객체 생성은 사후 관리가 되지 않는다.
+    * 이는, 생성자 함수에 new 연산자를 적용하여 생성된 객체는, 내부적으로 생성자 함수의 prototype 프로퍼티의 값(=객체)을 가리키게끔 로직이 적용되기 때문이다.  
+* prototype에서, 생성자 함수로 만들어진 객체는 instanceof 연산을 적용할 수 있다.
+
+```javascript
+function YalcoChicken (name, no) {
+  this.name = name;
+  this.no = no;
+  this.introduce = function () {
+    return `안녕하세요, ${this.no}호 ${this.name}점입니다!`;
+  }
+}
+
+function createYalcoChicken (name, no) {
+  return {
+    name, no,
+    introduce () {
+      return `안녕하세요, ${this.no}호 ${this.name}점입니다!`;
+    }
+  }
+}
+
+// 객체 리터럴
+const chain1 = {
+  name: '판교', no: 3,
+  introduce: function () {
+    return `안녕하세요, ${this.no}호 ${this.name}점입니다!`;
+  }
+};
+
+// 객체 반환 함수
+const chain2 = createYalcoChicken('강남', 17);
+
+// 생성자 함수
+const chain3 = new YalcoChicken('제주', 24);
+```
+
+```javascript
+console.log(chain1, chain1 instanceof YalcoChicken); //false
+console.log(chain2, chain2 instanceof YalcoChicken); //false
+console.log(chain3, chain3 instanceof YalcoChicken); //true
+```
+
+```javascript
+//아래의 경우를 본다면, prototype이 어떤 것인지 좀 더 명확해질 것이다.
+console.log(chain2.__proto__); // {constructor: ƒ, __defineGetter__: ƒ, __defineSetter__: ƒ, hasOwnProperty: ƒ, __lookupGetter__: ƒ, …}
+
+console.log(chain3.__proto__); // {constructor: ƒ}
+console.log(chain3.__proto__.__proto__); // chain2.__proto__와 동일
+
+//즉, chain2는, 기본적인 prototype 객체가 생성됨을 확인할 수 있고, chain3는 new 연산자를 통해 생성되었으므로,  YalcoChicken.prototype이 가리키는 값(객체)이 chain3.__proto__에 할당됨을 알 수 있다
+	//=> 또한, chain3.__proto__ 역시 객체이므로, 이 객체의 __proto__ 프로퍼티는 기본적인 prototype 객체임을 확인할 수 있다.
+```
+
+
+
+함수도 객체이므로, 아래의 기능이 가능하다.
+
+* 인스턴스를 생성하지 않고, 함수 자체에 대해 필드와 함수를 추가할 수 있다. 
+  * 이는, 치킨을 관리하는 방법에 이슈가 있을 시, 가맹점(인스턴스)가 아닌 본사에 전화를 하는 것과 같다.
+
+```javascript
+function YalcoChicken (name, no) {
+  this.name = name;
+  this.no = no;
+  this.introduce = function () {
+    return `안녕하세요, ${this.no}호 ${this.name}점입니다!`;
+  }
+}
+
+// 본사의 정보와 업무
+YalcoChicken.brand = '얄코치킨';
+YalcoChicken.contact = function () {
+  return `${this.brand}입니다. 무엇을 도와드릴까요?`;
+};
+
+const chain1 = new YalcoChicken('판교', 3);
+
+console.log(YalcoChicken.contact());
+console.log(chain1.contact()); //에러 발생
+```
+
+
+
+new 연산자를 실수로 빠뜨린 경우, 아래의 코드로 보완이 가능하다.
+
+```javascript
+function YalcoChicken (name, no) {
+  this.name = name;
+  this.no = no;
+  this.introduce = function () {
+    return `안녕하세요, ${this.no}호 ${this.name}점입니다!`;
+  }
+
+  if (!new.target) { // 이 부분을 지우고 다시 해 볼 것
+    return new YalcoChicken(name, no);
+  }
+}
+
+const chain1 = new YalcoChicken('판교', 3);
+const chain2 = YalcoChicken('강남', 17);
+
+console.log(chain1, chain2);
+```
+
+
+
+참고 사항
+
+* 프로토타입의 정의와 내용
+
+  * (생성자) 함수의 프로토타입과, 해당 생성자 함수를 통해 (new 연산자 이용하여) 생성된 객체와의 연관성
+  * 출처 : https://ko.javascript.info/function-prototype
+
+* new.target에 대한 내용
+
+  * 출처 : https://ko.javascript.info/constructor-new
+
+* hoisting의 원리 (요약)
+
+  * javascript는 Execution Context 객체를 생성하여 변수 관리를 하게 된다.
+
+    * Execution Context의 종류에는, Global Execution Context와 Functional Execution Context가 있다
+
+      * 그리고, 각 Execution Context는 Lexical Environment와 Variable Environment로 나누어져 있다.
+
+        * 코드가 실행되기 전인 Creation Phase와, 실행되는 중인 Execution Phase로 나뉘게 된다.
+
+          * 각각의 Environment는, key가 식별자(변수명, class 명 등)이며 value가 각 변수에 할당된 값이 된다.
+
+          * 이 때, 코드가 실행되기 전, JS는 선언된 변수와 class명을 스캔하여 각 Environment에 저장한다
+
+            * var로 선언된 변수는 Variable Environment에 저장되며, 이는 해당 Execution Context의 스코프 및 내부 스코프에 var로 선언된 변수가 저장이 된다.
+            * 이 때, 초깃값은 undefined로 설정된다.
+
+          * let, const로 선언된 변수는 Lexical Environment에 저장되며, 이는 해당 Execution Context의 스코프에 선언된 변수만 저장이된다.
+
+            * 이 때, 초깃값은 역시 undefined로 설정된다.
+
+              => 이러한 원리에 의해, 
+
+            * 따라서, 해당 Execution Context의 스코프 내부에 또다른 스코프가 있는 경우, 그 내부 스코프에 let / const로 선언된 변수는 현재의 Lexical Environment에 저장되지 않는다.(★)
+
+              => 즉, 내부 스코프의 Creation Phase 단계 전까지는, 내부 스코프의 let/const로 선언된 변수 자체가 Lexical Environment에 저장되지 않는다. 
+
+        * 코드가 실행되고 나서, 각 변수에 값을 할당하는 코드가 실행되고 나서야 각 Environement에 선언된
+
+        * 함수의 경우, Creation Phase 단계에서 Variable Environment에 저장이 되기 때문에 hoisting이 되는 것이다.
+
+        * 이외에 hoisting이 되면서 값으로 초기화가 되는 대상은 아래와 같다
+
+          * var로 선언된 변수 => undefined로 초기화됨
+          * function
+
+        * 반면, hoisting은 되나, uninitialized로 초기화가 되어서 error를 발생시키는 대상은 아래와 같다
+
+          * let,const로 선언된 변수
+          * class
+
+        * hoisting이 되지 않는 대상은 아래와 같다.
+
+          * 함수 표현식
+          * 클래스 표현식
+
+  * 출처 
+
+    * https://blinders.tistory.com/90
+    * https://dkje.github.io/2020/08/30/ExecutionContext/

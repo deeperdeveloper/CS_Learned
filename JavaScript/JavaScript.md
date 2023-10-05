@@ -2314,3 +2314,358 @@ console.log(chain1, chain2);
 
     * https://blinders.tistory.com/90
     * https://dkje.github.io/2020/08/30/ExecutionContext/
+
+
+
+### 클래스
+
+엄밀히 얘기하면, 생성자 함수나 프로토 타입은 타 언어 문법과 차이가 있으므로, 타 언어 문법과 비슷한 "클래스"로 포장한 것임. (Syntactic sugar)
+
+* 생성자 함수와의 차이점
+
+  * 클래스는 호이스팅이 불가능하다.
+  * 클래스를 활용하여 인스턴스 생성 시, new 연산자가 반드시 필요하다.
+
+  ```javascript
+  // 차이 1. 클래스는 호이스팅되지 않음 (정확히는 되지만...)
+  const chain1 = new YalcoChicken('판교', 3);
+  
+  class YalcoChicken {
+    constructor (name, no) {
+      this.name = name;
+      this.no = no;
+    }
+    //프로토타입의 메서드로 간주된다.
+    introduce () {
+      return `안녕하세요, ${this.no}호 ${this.name}점입니다!`;
+    }
+  }
+  ```
+
+  ```javascript
+  // 차이 2. 클래스는 new 없이 사용하면 오류
+  // (생성자 함수는 오류 없이 undefined 반환)
+  //const chain2 = YalcoChicken('강남', 17); //error
+  
+  const chain3 = new YalcoChicken('판교', 33);
+  console.log(chain3); // YalcoChicken {name: '판교', no: 33}
+  console.log(YalcoChicken.prototype); // {constructor: ƒ, introduce: ƒ}
+  ```
+
+* constructor 메서드
+
+  ```javascript
+  class Person {
+    constructor (name, age, married = false) {
+      this.name = name;
+      this.age = age;
+      this.married = married;
+    }
+  }
+  
+  const person1 = new Person('박영희', 30, true);
+  const person2 = new Person('오동수', 18);
+  console.log(person1, person2);
+  ```
+
+* 클래스로 만든 인스턴스와 메서드로 만든 인스턴스의 차이점
+
+  * 아래의 예시에서, 클래스로 만든 인스턴스는, 프로토타입의 속성으로 bark 메서드를 가진다
+
+  * 또한, constructor로 "class Xxx" 로 나타내어진다.
+
+    ```javascript
+    class Dog {
+      //bark() 함수는 프로토타입으로 들어간다.
+      bark () {
+        return '멍멍';
+      }
+    }
+    const badugi = new Dog();
+    console.log(badugi, badugi.bark());
+    
+    //Dog {} [[Prototype]]: Object  bark: ƒ bark()  constructor: class Dog  [[Prototype]]: Object
+    ```
+
+  * 반면, 메서드로 만든 인스턴스는, key-value 형식으로 가진다.
+
+    ```javascript
+    function Dog2 () {
+      //Dog2() 생성자 함수와 new 연선자를 활용하여 만든 객체의, 함수 프로퍼티로 들어간다.
+      this.bark = function () {
+        return '멍멍';
+      }
+    }
+    const badugi = new Dog2();
+    console.log(badugi, badugi.bark());
+    ```
+
+    
+
+    
+
+
+
+클래스 필드
+
+=> 아래와 같이 정의 가능하다.
+
+```javascript
+class YalcoChicken {
+  //no와 menu, name 프로퍼티는 각각의 인스턴스의 프로퍼티로 정의된다.
+  //초기화가 필요없으면, constructor()를 명시하지 않아도 된다.
+  no = 0;
+  menu = { '후라이드': 10000, '양념치킨': 12000 };
+
+  constructor (name, no) {
+    this.name = name;
+    if (no) this.no = no;
+  }
+    
+  //introduce() 와 order() 함수는 YalcoChicken의 프로토타입(=> 객체의 __proto__ 프로퍼티가 참조)에 속하게 된다.
+  introduce () {
+    return `안녕하세요, ${this.no}호 ${this.name}점입니다!`;
+  }
+  order (name) {
+    return `${this.menu[name]}원입니다.`
+  }
+}
+
+console.log(new YalcoChicken('aa11'));
+// YalcoChicken {no: 0, menu: {…}, name: 'aa11'}
+```
+
+=> no, menu, name 프로퍼티 // 프로토타입에 constructor, 메서드가 정의되어 있다.
+
+
+
+
+
+클래스의 static 필드와 static 메서드는 오직 클래스 차원에서만 호출이 가능하다.
+
+````javascript
+class YalcoChicken {
+
+  // 정적 변수와 메서드
+  // YalcoChicken이 생성자 함수일 때, 마치 YalcoChicken.brand = '얄코치킨' 이렇게 지정하는 것과 동일 (즉, 인스턴스의 프로퍼티와 함수와는 관련이 없다.)
+  // 따라서, new YalcoChicken().brand 나 new YalcoChicken().contact() 는 불가능하다.
+  static brand = '얄코치킨';
+  static contact () {
+    return `${this.brand}입니다. 무엇을 도와드릴까요?`; //이 this는 YalcoChicken이다. 따라서, 정적 메서드에서는, 정적 필드만 호출이 가능하다. (당연히...)
+  }
+
+  constructor (name, no) {
+    this.name = name;
+    this.no = no;
+  } 
+  introduce () {
+    return `안녕하세요, ${this.no}호 ${this.name}점입니다!`;
+  }
+}
+
+console.log(YalcoChicken);
+console.log(YalcoChicken.contact());
+````
+
+=> 인스턴스가 brand 프로퍼티를 호출할 수 없다.
+
+
+
+클래스는 함수이다. 따라서, 아래와 같이 쓸 수 있다.
+
+```javascript
+class Dog {
+  bark () {
+    return '멍멍';
+  }
+}
+
+console.log(typeof Dog); //function
+```
+
+```javascript
+const 개 = Dog; // 할당될 수 있는 일급 객체
+const 바둑이 = new 개();
+
+console.log(바둑이); // 💡 콘솔에 나타난 타입 확인
+```
+
+
+
+### 접근자 프로퍼티와 은닉
+
+접근자 프로퍼티
+
+=> getter, setter 함수라고도 불리운다.
+
+=> 함수처럼 지정되었지만, 프로퍼티처럼 사용된다!
+
+=> **앞에서 배운 프로퍼티는, "데이터" 프로퍼티 라고 부른다.
+
+=> 객체 리터럴 및 클래스에서 사용이 가능하다.
+
+```javascript
+//객체 리터럴에서 사용하는 경우
+
+const person1 = {
+  age: 17, //데이터 프로퍼티
+
+  get koreanAge () {
+    return this.age + 1;
+  },
+
+  set koreanAge (krAge) {
+    this.age = krAge - 1;
+  }
+}
+```
+
+```javascript
+console.log(person1, person1.koreanAge);
+//{age: 17} 18
+
+person1.koreanAge = 20; //setter 호출
+console.log(person1, person1.koreanAge); //getter 호출
+
+//{age: 19} 20
+```
+
+
+
+클래스에서도 마찬가지로 
+
+```javascript
+class YalcoChicken {
+  constructor (name, no) {
+    this.name = name;
+    this.no = no;
+  }
+  get chainTitle() {
+    return `${this.no}호 ${this.name}점`;
+  }
+  set chainNo(chainNo) {
+    if (typeof chainNo !== 'number') return;
+    if (chainNo <= 0) return;
+    this.no = chainNo;
+  }
+}
+```
+
+```javascript
+const chain1 = new YalcoChicken('판교', 3);
+console.log(chain1.chainTitle); //"3호 판교점"
+
+console.log(chain1);
+
+//chain1을 log로 찍어보면, chainTitle이 데이터 프로퍼티로 저장되어 있음을 확인할 수 있다.
+
+//YalcoChicken {name: '판교', no: 3}
+//name: "판교"
+//no: 3
+//chainTitle: "3호 판교점"
+//[[Prototype]]: Object
+//	chainTitle: "3호 판교점"
+//	constructor: class YalcoChicken
+//	set chainNo: ƒ chainNo(chainNo)
+//	get chainTitle: ƒ chainTitle()
+//	[[Prototype]]: Object
+```
+
+```javascript
+chain1.chainNo = '4'; //setter에서 정한 제약조건 때문에 설정되지 않는다.
+console.log(chain1);
+
+//YalcoChicken {name: '판교', no: 3}
+```
+
+```javascript
+chain1.chainNo = 4;
+console.log(chain1);
+
+//YalcoChicken {name: '판교', no: 6}
+```
+
+
+
+필드 이름과 setter의 이름이 같다면, this.no = no; 는, 결국 setter 함수를 호출하는 꼴이다.
+
+```javascript
+class YalcoChicken {
+  constructor (name, no) {
+    this.name = name;
+    this.no = no; //set no(no) 호출
+  }
+  get no () { 
+    return this.no + '호점'; 
+  }
+  set no (no) {
+    this.no = no; //set no(no) 호출. 무한히 호출하므로, StackOverflow 에러가 발생.
+  }
+}
+const chain1 = new YalcoChicken('판교', 3); // ⚠️ 오류 발생!
+```
+
+this.no => setter 함수를 호출할 가능성이 있다.
+
+=> 따라서, this._no 를 활용하여, _no 필드를 별도로 setter 함수 내에 정의함 (알아서 해석함)
+
+```javascript
+class YalcoChicken {
+  constructor (name, no) {
+    this.name = name;
+    this.no = no;
+  }
+  get no () { 
+    return this._no + '호점'; 
+  }
+  set no (no) { 
+    this._no = no;
+  }
+}
+
+const chain1 = new YalcoChicken('판교', 3);
+```
+
+
+
+이제, this._no 에 직접 접근할 수 없게끔 해야 한다. (그래야 setter 함수를 사용하는 의미가 있으므로)
+
+=> 따라서, 접근제어자 private 등장. (#을 프로퍼티 명 앞에 붙인다.)
+
+** 의문) #을 붙여도... 접근이 되는데요????
+
+
+
+```javascript
+class Employee {
+  #name = '';
+  #age = 0;
+  constructor (name, age) {
+    this.#name = name;
+    this.#age = age;
+  }
+  get name () {
+    // [n]: n + 1 번째 글자를 반환
+    return this.#name[0] + '모씨';
+  }
+  get age () {
+    return this.#age - (this.#age % 10) + '대';
+  }
+  set age (age) {
+    if (typeof age === 'number' && age > 0) {
+      this.#age = age;
+    };
+  }
+  getOlder(years) { this.#age += years; }
+}
+
+const emp1 = new Employee('김복동', 22);
+```
+
+```javascript
+console.log(emp1.name, emp1.age)
+```
+
+
+
+=> 이로 인해, 클라이언트가 key를 알더라도, key에 해당하는 값을 알 수 없게 된다. (물론, 클라는 서버 내부의 코드를 볼 수 없다.)

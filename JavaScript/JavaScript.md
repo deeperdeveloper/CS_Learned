@@ -2669,3 +2669,92 @@ console.log(emp1.name, emp1.age)
 
 
 => 이로 인해, 클라이언트가 key를 알더라도, key에 해당하는 값을 알 수 없게 된다. (물론, 클라는 서버 내부의 코드를 볼 수 없다.)
+
+
+
+### 상속
+
+클래스의 상속 문법
+
+=> 결국, JS에서는 프로토타입을 활용해서 상속을 구현함을 알 수 있다.
+
+```javascript
+class Bird {
+  wings = 2;
+}
+class Eagle extends Bird {
+  claws = 2;
+}
+class Penguin extends Bird {
+  swim () { console.log('수영중...'); }
+}
+class EmperorPenguin extends Penguin {
+  size = 'XXXL';
+}
+
+const birdy = new Bird();
+const eaglee = new Eagle();
+const pengu = new Penguin();
+const pengdol = new EmperorPenguin();
+
+console.log(birdy, eaglee, pengu, pengdol);
+
+//어떤 객체의 __proto__ 프로퍼티의 값(=객체, =Function.prototype)의 타입은, 부모 클래스의 타입이라고 말할 수 있다.
+// 예) eaglee 객체의 __proto__ 프로퍼티의 값의 타입은, Bird 타입이다.
+//
+
+//birdy
+// Bird {wings: 2}
+// wings: 2
+// [[Prototype]]: Object
+//		constructor: class Bird
+//  	[[Prototype]]: Object
+
+//eaglee
+//Eagle {wings: 2, claws: 2}
+//claws: 2
+//wings: 2
+//[[Prototype]]: Bird
+//	constructor: class Eagle
+//	[[Prototype]]: Object
+// 		constructor: class Bird
+//		[[Prototype]]: Object
+
+
+//pengu
+//Penguin {wings: 2}
+//wings: 2
+//[[Prototype]]: Bird
+//	constructor: class Penguin
+//	swim: ƒ swim()
+//	[[Prototype]]: Object
+//	constructor: class Bird
+//	[[Prototype]]: Object
+
+//pengdol
+//EmperorPenguin {wings: 2, size: 'XXXL'}
+//size: "XXXL"
+//wings: 2
+//[[Prototype]]: Penguin
+//	constructor: class EmperorPenguin
+//  [[Prototype]]: Bird
+//		constructor: class Penguin
+//		swim: ƒ swim()
+//		[[Prototype]]: Object
+//			constructor: class Bird
+//			[[Prototype]]: Object
+```
+
+* 위의 예에서 알 수 있는 주요한 특징
+
+  * 어떤 객체의 `__proto__ `프로퍼티의 값(=객체, =Function.prototype)의 타입은, 부모 클래스의 타입이라고 말할 수 있다.
+    예) eaglee 객체의 `__proto__ `프로퍼티의 값의 타입은, Bird 타입이다.
+
+  * 부모 객체와 자식 객체가 있다고 하자
+    * 부모 객체의 프로퍼티의 값이 함수가 아니라면, (즉, 값이거나 객체라면), 해당 프로퍼티는 모두 자식의 프로퍼티로 간주된다.
+    * 예) 위에서, eaglee 객체는 상위 클래스(Bird)에 정의된 "값 프로퍼티 wings" 프로퍼티를 가지게 된다.
+    * => 내 생각) 이렇게 되어야 아래의 사유에서 합당하다고 생각
+      * => this가 자식 객체를 나타내는 상황이라고 하자. 이 때, 부모 클래스의 함수를 호출할 때에는 `__proto__` 프로퍼티에 정의된 객체의 함수를 호출할 것이며, 이는 암묵적으로 this.(부모 클래스의 함수) 로서 호출을 한다.
+      * => 이 때, 부모 클래스의 함수 내에서는, 부모 클래스의 프로퍼티를 활용하여 정의가 되어 있으며, 코드로서는 this.(부모 클래스 프로퍼티) 로서 작성되어 있을 것이다.
+      * => 그런데 지금 상황에서는, this는 "자식 객체" 이므로, 위의 코드가 정상적으로 동작하려면 "자식 객체" 내에 "부모 클래스 값(객체) 프로퍼티" 가 정의되어야 할  것이다.
+        * 함수는 일반적으로 Function.prototype에 정의되어 있으므로, 자식 객체인 this 입장에서  부모 클래스의 prototype에 정의된 함수를 활용하려면 this에다가 부모 클래스의 값(객체) 프로퍼티가 정의되어야 하는 것이 타당할 것이다.

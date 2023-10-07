@@ -2758,3 +2758,411 @@ console.log(birdy, eaglee, pengu, pengdol);
       * => 이 때, 부모 클래스의 함수 내에서는, 부모 클래스의 프로퍼티를 활용하여 정의가 되어 있으며, 코드로서는 this.(부모 클래스 프로퍼티) 로서 작성되어 있을 것이다.
       * => 그런데 지금 상황에서는, this는 "자식 객체" 이므로, 위의 코드가 정상적으로 동작하려면 "자식 객체" 내에 "부모 클래스 값(객체) 프로퍼티" 가 정의되어야 할  것이다.
         * 함수는 일반적으로 Function.prototype에 정의되어 있으므로, 자식 객체인 this 입장에서  부모 클래스의 prototype에 정의된 함수를 활용하려면 this에다가 부모 클래스의 값(객체) 프로퍼티가 정의되어야 하는 것이 타당할 것이다.
+
+
+
+
+
+```javascript
+class YalcoChicken {
+  no = 0;
+  menu = { '후라이드': 10000, '양념치킨': 12000 };
+
+  constructor (name, no) {
+    this.name = name;
+    if (no) this.no = no;
+  }
+  introduce () {
+    return `안녕하세요, ${this.no}호 ${this.name}점입니다!`;
+  }
+  order (name) {
+    return `${this.menu[name]}원입니다.`
+  }
+}
+```
+
+```javascript
+class YalcoChickenAndCafe extends YalcoChicken {
+  cafeMenu = { '아메리카노': 4000, '라떼': 4500 };
+  cafeOrder (name) {
+    return `${this.cafeMenu[name]}원입니다.`
+  }
+}
+
+const chain1 = new YalcoChickenAndCafe('서면', 2)
+```
+
+```javascript
+console.log(chain1);
+
+//YalcoChickenAndCafe {no: 2, menu: {…}, name: '서면', cafeMenu: {…}}
+//cafeMenu: {아메리카노: 4000, 라떼: 4500}
+//menu: {후라이드: 10000, 양념치킨: 12000}
+//name: "서면"
+//no: 2
+//[[Prototype]]: YalcoChicken
+//	cafeOrder: ƒ cafeOrder(name)
+//	constructor: class YalcoChickenAndCafe
+//	[[Prototype]]: Object
+//		constructor: class YalcoChicken
+//		introduce: ƒ introduce()
+//		order: ƒ order(name)
+//		[[Prototype]]: Object
+```
+
+
+
+오버라이딩
+
+* 아래의 코드를 통해 내가 알아낸 사실
+  * 부모 클래스와 자식 클래스에 travel()이 다 정의가 되어 있지만, `__proto__` 속성을 타고 올라가서 발견한 맨 첫번째의 travel() 메서드를 적용하는 것으로 보임 ( = 자식 클래스의 travel() 로 override가 된다고 말할 수 있다!)
+
+```javascript
+class Bird {
+  wings = 2;
+  canFly = true;
+  travel () { console.log('비행중...') }
+}
+class Eagle extends Bird {
+  claws = 2;
+}
+class Penguin extends Bird {
+  canFly = false;
+  travel () { console.log('수영중...') }
+}
+```
+
+```javascript
+const eaglee = new Eagle();
+const pengu = new Penguin();
+
+console.log(eaglee);
+eaglee.travel();
+
+console.log(pengu);
+pengu.travel();
+```
+
+* 아래의 경우를 통해서, 상속의 특징을 알 수 있다.
+
+  * YalcoChicken에 정의된 함수는 자식 객체가 호출할 수 있으며, 이 경우 this는 자식 객체가 된다.
+
+    => 따라서, 부모 클래스에 정의된 프로퍼티가 자식 객체(this)가 직접 가지는 것이 타당할 것이다.
+
+```javascript
+class YalcoChicken {
+  no = 0;
+  menu = { '후라이드': 10000, '양념치킨': 12000 };
+
+  constructor (name, no) {
+    this.name = name;
+    if (no) this.no = no;
+  }
+  introduce () {
+    return `안녕하세요, ${this.no}호 ${this.name}점입니다!`;
+  }
+  order (name) {
+    return `${this.menu[name]}원입니다.`
+  }
+}
+
+class YorkNannyYalcoChicken extends YalcoChicken {
+  introduce () {
+    return `또 뭐 쳐먹으러 기어들어왔어.`;
+  }
+  order (name) {
+    return `${this.menu[name]}원이여.`
+  }
+}
+
+const chain1 = new YorkNannyYalcoChicken ('종로', 48);
+
+console.log(chain1.introduce()); //또 뭐 쳐먹으러 기어들어왔어.
+console.log(chain1.order('양념치킨')); //12000원이여.
+```
+
+
+
+super 키워드
+
+```javascript
+class YalcoChicken {
+  no = 0;
+  menu = { '후라이드': 10000, '양념치킨': 12000 };
+
+  constructor (name, no) {
+    this.name = name;
+    if (no) this.no = no;
+  }
+  introduce () {
+      console.log("==");
+      console.log(this);
+      console.log("==");
+    return `안녕하세요, ${this.no}호 ${this.name}점입니다!`;
+  }
+  order (name) {
+    return `${this.menu[name]}원입니다.`
+  }
+}
+
+class ConceptYalcoChicken extends YalcoChicken {
+  #word = '';
+  constructor (name, no, word) {
+    super(name, no);
+    this.#word = word;
+  }
+  introWithConcept () {
+    return super.introduce() + ' ' + this.#word;
+  }
+  order (name) {
+    return super.order(name) + ' ' + this.#word;
+  }
+}
+
+const pikaChain = new ConceptYalcoChicken('도봉', 50, '피카피카~');
+```
+
+```javascript
+console.log(pikaChain);
+console.log(pikaChain.introWithConcept());
+console.log(pikaChain.order('후라이드'));
+
+//첫번째 줄 결과
+//ConceptYalcoChicken {no: 50, menu: {…}, name: '도봉', #word: '피카피카~'}
+//menu: {후라이드: 10000, 양념치킨: 12000}
+//name: "도봉"
+//no: 50
+//#word: "피카피카~"
+//[[Prototype]]: YalcoChicken
+//	constructor: class ConceptYalcoChicken
+//	introWithConcept: ƒ introWithConcept()
+//	order: ƒ order(name)
+//	[[Prototype]]: Object
+//		constructor: class YalcoChicken
+//		introduce: ƒ introduce()
+//		order: ƒ order(name)
+//      [[Prototype]]: Object
+
+//두번째 줄 결과
+//==
+//ConceptYalcoChicken {no: 50, menu: {…}, name: '도봉', #word: '피카피카~'}
+//==
+    
+//세번째 줄 결과
+//안녕하세요, 50호 도봉점입니다! 피카피카~
+//10000원입니다. 피카피카~
+```
+
+=> super는 크게 2가지 용도로 활용됨을 알 수 있다.
+
+* 자식 클래스의 constructor 내부에서 사용 시 -> 부모 클래스의 constructor를 가리킴
+* 자식 클래스의 method 내부에서 사용 시 -> 부모 클래스를 가리킴
+
+
+
+정적 메서드와 정적 프로퍼티에서도 동일한 방식으로 상속이 적용된다.
+
+```javascript
+class YalcoChicken {
+  static brand = '얄코치킨';
+  static contact () {
+    console.log(`${this.brand}입니다. 무엇을 도와드릴까요?`);
+  }
+}
+
+class ConceptYalcoChicken extends YalcoChicken {
+  static contact () {
+    super.contact(); //현재 this는 ConceptYalcoChicken 클래스이며, __proto__ 속성의 값(객체)는 YalcoChicken 클래스 그 자체를 가리키므로, YalcoChicken 클래스 객체의 contact() 가 호출된다.
+    console.log('컨셉 가맹문의는 홈페이지를 참조하세요.');
+  }
+}
+
+ConceptYalcoChicken.contact();
+//얄코치킨입니다. 무엇을 도와드릴까요?
+//컨셉 가맹문의는 홈페이지를 참조하세요.
+```
+
+* (내가 느끼기에) 관심있게 파악한 사항
+
+  * 위 코드에서 ConceptYalcoChicken의 contact() 함수 내부에서, super.contact() 를 호출하면, 궁극적으로 아래의 과정이 펼쳐진다.
+
+    * YalcoChicken의 contact() 함수 호출
+
+      * 이 때, 이 contact() 함수 내부에서의 this는 "ConceptYalcoChicken 클래스 그 자체의 객체"를 가리킨다.
+
+      * 그런데 ConceptYalcoChicken 클래스를 console.dir() 로 파악하면, brand 프로퍼티가 존재하지 않는다.
+
+        * 더 정확히는, `ConceptYalcoChicken.__proto__ ` 속성에 brand 프로퍼티가 존재하며 이는 `ConceptYalcoChicken.__proto__.brand` 로 접근이 가능.
+
+          => 이는 ConceptYalcoChicken.brand 로도 접근이 가능
+
+  * 위의 과정을 통해서 아래의 결론을 도출하였다.
+
+    * 클래스의 상속 과정은, new 연산자를 만든 객체에서의 상속과 다르게, 부모 클래스의 값 프로퍼티를 자식 클래스로 당겨오는 과정이 존재하지 않는다
+
+      => (내 생각) 객체에서는, 부모 객체를 만들지 않고 자식 객체만으로 부모 객체의 프로퍼티를 활용해야 했기에 부모 객체의 값 프로퍼티를 다 가져오는 과정이 포함된다고 생각함
+
+      => 반면, 클래스에서는, 이미 부모 클래스와 자식 클래스가 모두 메모리 상에 존재하기 때문에, 굳이 위의 과정이 필요하지 않다고 생각함.
+
+      => 자식 클래스에서 부모 클래스의 property를 조회하기를 원할 때, 자식 객체의 `__proto__`를 통해서 (암묵적으로도) 조회가 가능하다는 사실은, 위의 생각을 뒷받침한다.
+
+
+
+### 객체의 스프레드와 디스트럭쳐링
+
+스프레드
+
+```javascript
+const class1 = {
+  x: 1, y: 'A', z: true
+};
+
+const class2 = { ...class1 };
+
+// 아래의 참조복사 코드와 다름!
+// const class2 = class1;
+
+console.log(class2);
+```
+
+=> class1과 class2는 다른 객체이다.
+
+
+
+스프레드는, 특정 객체의 프로퍼티를 포함하는 다른 객체 생성에도 유용하다.
+
+```javascript
+const class1 = {
+  a: 1, b: 'A', c: true
+};
+const class2 = {
+  d: { x: 10, y: 100 }, e: [1, 2, 3]
+};
+const class3 = {
+  ...class1, z: 0
+}
+const class4 = {
+  ...class2, ...class3, ...class2.d
+}
+
+console.log(class4);
+//{d: {…}, e: Array(3), a: 1, b: 'A', c: true, …}
+//	a: 1
+//	b: "A"
+//	c: true
+//	d: {x: 10, y: 100}
+//	e: (3) [1, 2, 3]
+//	x: 10
+//	y: 100
+//	z: 0
+//	[[Prototype]]: Object
+```
+
+
+
+중복되는 프로퍼티는, 뒤의 것으로 덮어씌워진다.
+
+```javascript
+const class1 = {
+  ...{ a: 1, b: 2 },
+  ...{ b: 3, c: 4, d: 5 },
+  ...{ c: 6, d: 7, e: 8 }
+}
+
+console.log(class1);
+```
+
+
+
+(스프레드 활용 시) 기본적으로 shallow copy가 일어난다.
+
+```javascript
+const class1 = {
+  x: 1,
+  y: { a: 2 },
+  z: [3, 4]
+};
+
+const class2 = { ...class1 };
+class1.x++;
+class1.y.a++;
+class1.z[0]++;
+```
+
+=> class1과 class2 객체는, 객체 프로퍼티에 대해서는 동시에 변경된다. (shallow copy이기 때문)
+
+
+
+
+
+디스트럭쳐링
+
+=> 식별자에 해당하는 값을 가져온다.
+
+=> 객체에서, 모든 (또는 특정한) 프로퍼티의 값을 받아올 때 활용한다.
+
+
+
+아래의 코드는 모두 같은 코드이다.
+
+```javascript
+const obj1 = {
+  x: 1, y: 2, z: 3
+};
+
+const x = obj1.x;
+const y = obj1.y;
+const z = obj1.z;
+
+console.log(x, y, z);
+```
+
+```javascript
+const obj1 = {
+  x: 1, y: 2, z: 3
+};
+
+const {x, y, z} = obj1;
+
+console.log(x, y, z);
+```
+
+아래의 경우는 일부만 가져오는 기능이다.
+
+```javascript
+const obj1 = {
+  x: 1, y: 2, z: 3
+};
+
+const {x, z} = obj1;
+
+console.log(x, z);
+```
+
+함수에서도 디스트럭쳐링이 활용될 수 있다.
+
+```javascript
+// 디스트럭쳐링 (적절히 활용)
+function introduce({age, married, job, name}) {
+  // 순서 무관
+  // 이 프로퍼티들을 갖는 객체를 인자로 받겠다는 의도 드러냄
+
+  console.log(`제 이름은 ${name}, `
+    + `나이는 ${age}세구요. `
+    + `직업은 ${job}, `
+    + `${married ? '기혼' : '미혼'}입니다.`
+  )
+}
+
+const person1 = {
+  job: '개발자',
+  age: 28,
+  married: false,
+  name: '김철수',
+  blood: 'O'
+};
+
+introduce(person1);
+```
+
+** 그리고 배열에서, length 프로퍼티는 기본적으로 존재

@@ -2291,7 +2291,7 @@ console.log(chain1, chain2);
 
               => 즉, 내부 스코프의 Creation Phase 단계 전까지는, 내부 스코프의 let/const로 선언된 변수 자체가 Lexical Environment에 저장되지 않는다. 
 
-        * 코드가 실행되고 나서, 각 변수에 값을 할당하는 코드가 실행되고 나서야 각 Environement에 선언된
+        * 코드가 실행되고 나서, 각 변수에 값을 할당하는 코드가 실행되고 나서야 각 Environement에 선언된 변수가 초기화된다.
 
         * 함수의 경우, Creation Phase 단계에서 Variable Environment에 저장이 되기 때문에 hoisting이 되는 것이다.
 
@@ -3166,3 +3166,264 @@ introduce(person1);
 ```
 
 ** 그리고 배열에서, length 프로퍼티는 기본적으로 존재
+
+
+
+## 섹션6. 주요 빌트인 객체
+
+### 전역 객체와 표준 빌트인 객체
+
+전역 객체
+
+* 전역 범위에 항상 존재하는 객체
+
+  * 브라우저에서는, console.log(this)를 쳐 보면 알 수 있다.
+  * 브라우저의 것이랑, node.js의 것이 다르다.
+  * console.log(this)를 콘솔에서 쳐 보고, node.js 터미널(REPL)에서 쳐보고, node.js에서 문서로 실행해보면 다른 결과가 나타난다.
+
+* 표준 빌트인 객체
+
+  * 환경에 관계없이 제공해야만 하는 것들
+
+* 호스트 객체
+
+  * 각 환경에서 제공하는 기타 객체들
+
+    => 브라우저의 Web API, Node.js API 등등에서 제공하는 객체들. 
+
+* (브라우저 한정) 전역으로 설정한 var 변수와 전역 함수
+
+  * globalThis.(const변수) => 읽어낼 수 없다.
+  * (내  생각) - 이는 hoisting 시, variable Environment에 저장되는 변수/함수 만 다루겠다는 의미와 관련될 거 같다는 생각. 
+
+  ```javascript
+  var myGlobalVar = 1;
+  const myGlobalConst = 1;
+  
+  function myGlobalFunc () {};
+  
+  console.log(
+    globalThis.myGlobalVar, //1이 출력되며, myGlobalVar 프로퍼티가 전역객체의 프로퍼티로서도 추가된다.
+    globalThis.myGlobalConst, //undefined로 나타난다.
+    globalThis.myGlobalFunc //myGlobalFunc 프로퍼티가 전역객체의 프로퍼티로서 추가된다.
+  );
+  ```
+
+
+
+
+
+참고할 만한 사항
+
+* node.js에서 console.log(global);을 실행 시, 표준 빌트인 객체는 안 나오고 node.js에서 제공하는 API만 출력됨을 확인할 수 있다.
+  * 하지만, console.log(globalThis.isNaN) 을 입력 시, Function으로서 isNaN 프로퍼티가 존재함을 확인할 수 있다.
+  * => 객체를 조회해서 프로퍼티가 조회되지 않고, 실제 프로퍼티를 직접 조회해야 확인이 되는 점은 좀 의아하기는 하다. (내 생각)
+
+
+
+표준 빌트인 객체
+
+* ECMAScript 사양에 정의된 객체들
+
+* boolean, Infinity, isNaN 등은 표준 빌트인 객체이므로, 그냥 가져다 쓸 수 있었던 거임
+
+  ```javascript
+  // 그러나 요소들로 갖고 있는 것은 확인 가능
+  console.log(globalThis.Infinity);
+  console.log(globalThis.isNaN);
+  console.log(globalThis.Object);
+  ```
+
+  => globalThis를 생략해도 된다.
+
+
+
+래퍼 객체 
+
+원시 값이 프로퍼티를 활용할 수 있는 이유는, 프로퍼티를 호출할 때 일시적으로 wrapper 객체로서 작동을 하며, 호출이 끝나고 나면 다시 원시 타입으로 돌리기 때문이다. (메모리 절약!)
+
+```javascript
+const str = 'abcde';
+console.log(
+  str.length,
+  str.toUpperCase(),
+  str[0]
+);
+```
+
+```javascript
+const num = 123.4567;
+console.log(
+  typeof num.toString(), //string
+  num.toFixed(2)
+);
+```
+
+비교를 위해 아래의 코드를 실행
+
+```javascript
+const str = new String('abcde'); //Object
+const num = new Number(123.4567); //Object
+const bool = new Boolean(true); //Object
+
+console.log(str.valueOf()); //abcde
+console.log(num.valueOf()); //123.4567
+console.log(bool.valueOf()); //true
+```
+
+
+
+### 빌트인 전역 프로퍼티와 함수
+
+eval은 쓰지 말 것.
+
+(eval은 문자를 받아서 js로 해석하는 과정이다. 이는, 실제로 코드로서 실행하는 과정을 생략하는 등 최적화 과정이 없으므로 속도가 떨어지게 된다.)
+
+```javascript
+//아래의 과정은, 이제는 엣지 브라우저 기준에서 에러가 뜬다. (eval 함수를 허용하지 않음)
+
+const x = eval('1 + 2 + 3');
+
+// 객체나 함수의 리터럴은 괄호로 감싸야 함
+const obj = eval('({a: 1, b: 2})');
+
+console.log(x, obj);
+```
+
+```javascript
+//아래의 과정은, 이제는 엣지 브라우저 기준에서 에러가 뜬다. (eval 함수를 허용하지 않음)
+
+const code = `
+  let x = 1;
+  console.log(x++, x);
+`;
+
+eval(code);
+```
+
+
+
+isFinite() 기능
+
+```javascript
+//true
+console.log(
+  isFinite(1),
+  isFinite(0),
+  isFinite('1'),
+  isFinite(null)
+);
+```
+
+```javascript
+//false
+console.log(
+  isFinite(1/0),
+  isFinite(Infinity),
+  isFinite(-Infinity),
+  isFinite(NaN),
+  isFinite('abc')
+);
+```
+
+
+
+parseFloat() => 인자로 받은 값을 실수로 변환. + 숫자로 시작하면 읽을 수 있는 부분까지 반환
+
+=> 그 외의 경우는 NaN을 반환
+
+```javascript
+console.log(
+  parseFloat(123.4567),
+  parseFloat('123.4567'),
+  parseFloat(' 123.4567 ')
+);
+
+//123.4567
+//123.4567
+//123.4567
+```
+
+```javascript
+console.log(
+  parseFloat('123.0'),
+  parseFloat('123'),
+  parseFloat(' 123ABC '),
+  parseFloat([123, 456, 789])
+);
+
+//123
+//123
+//123    //문자열의 앞뒤 공백 무시
+//123	 //배열의 맨 첫번째 요소의 숫자
+```
+
+```javascript
+//NaN
+console.log(
+  parseFloat('ABC123'),
+  parseFloat({x: 1}),
+  parseFloat([]),
+  parseFloat(['a', 1, true])
+);
+```
+
+
+
+parseInt() => 인자로 받은 값을 정수(type은 Number)로 반환 + 2번째 인자로 숫자 n을 받으면, n진법으로 해석해서 10진법의 결과물로 반환해준다.
+
+```javascript
+console.log(
+  parseInt('11'),
+  parseInt('11', 2),
+  parseInt('11', 8),
+  parseInt('11', 16),
+  parseInt('11', 32),
+
+  parseInt('11', 37),
+  parseInt('11', 'A'),
+);
+```
+
+```javascript
+console.log(
+  parseInt('abc'),
+  parseInt('{}'),
+  parseInt('[]')
+);
+```
+
+
+
+encodeURI(), encodeURIComponent()
+
+* encodeURI() 는 전체 URI를 받을 것을 기대(가정)하고 인코딩 수행
+  * ?, =, & (특정 기능 수행)을 인코딩하지 않는다. 
+* 반면, encodeURIComponent()는 요소를 인코딩한다. 
+  * 아래의 경우는, "얄코"만 인자로 넘겨야 한다.
+  * ?=얄코를 통째로 넘기면, `?` 와 `=` 도 인코딩이 된다. (encodeURI() 함수와의 차이.)
+
+```javascript
+const searchURI = 'https://www.google.com/search?q=얄코';
+const encodedURI = encodeURI(searchURI);
+
+console.log(encodedURI);
+
+//https://www.google.com/search?q=%EC%96%84%EC%BD%94
+
+//즉, URI를 아래의 규칙으로 인코딩한다.
+//	=> 아스키 문자는 그대로, 그리고 아스키가 아닌 문자와 "일부" 특수문자는 아스키 코드로 인코딩한다  
+```
+
+```javascript
+const keyword = '얄코';
+const encodedKeyword = encodeURIComponent(keyword);
+
+console.log(encodedKeyword);
+//%EC%96%84%EC%BD%94
+
+const searchURI = `https://www.google.com/search?q=${encodedKeyword}`;
+console.log(searchURI);
+//https://www.google.com/search?q=%EC%96%84%EC%BD%94
+```
+

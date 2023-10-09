@@ -3427,3 +3427,561 @@ console.log(searchURI);
 //https://www.google.com/search?q=%EC%96%84%EC%BD%94
 ```
 
+
+
+### String 객체
+
+```javascript
+const fromNum = new String(123);
+const fromBool = new String(true);
+const fromArr = new String([1, 'A', false]);
+const fromObj = new String({a: 1});
+
+console.log(typeof fromNum, fromNum);
+console.log(typeof fromBool, fromBool);
+console.log(typeof fromArr, fromArr);
+console.log(typeof fromObj, fromObj);
+
+//object String {'123'}
+//		0: "1"
+//		1: "2"
+//		2: "3"
+//		length: 3
+//      [[Prototype]]: String
+//      [[PrimitiveValue]]: "123"
+//object String {'true'}
+//object String {'1,A,false'}
+//object String {'[object Object]'}
+```
+
+```javascript
+//원시값으로 반환
+//따라서, 아래의 타입은 모두 'string'이다.
+console.log(fromNum.toString());
+console.log(fromBool.toString());
+console.log(fromArr.toString());
+console.log(fromObj.toString());
+```
+
+=> 인자로 받은 값을 감싸서 String 객체로 반환
+
+** new 없이 객체를 생성 시, 타입이 다름을 확인할 수 있다. (문자열 그 자체로 반환된다.)
+
+```javascript
+const str1 = String('Hello World!');
+const str2 = String(123);
+const str3 = String(true);
+const str4 = String({x: 1, y: 2}); // 💡 [object Object]
+const str5 = String([1, 2, 3]); // 💡 1,2,3
+
+console.log(typeof str1, str1);
+console.log(typeof str2, str2);
+console.log(typeof str3, str3);
+console.log(typeof str4, str4);
+console.log(typeof str5, str5);
+
+//string Hello World!
+//string 123
+//string true
+//string [object Object]
+//string 1,2,3
+
+```
+
+
+
+유사 배열 객체
+
+=> 내용을 바꿀 수 없다는 점 외에는, 배열의 기능을 대동소이하게 수행한다.
+
+=> String은 원시값이므로, [] 접근이나 인스턴스 메서드로 특정 글자만 수정하는 것이 불가능하다. (조금 더 깊게 파헤쳐보고 싶음) 
+
+<u>=> (내 생각) primitive 값은 그 자체로 저장이 되기 때문에, 해당 값의 일부분을 변경하려고 하면 메모리 상의 아예 다른 곳에 변경 이후의 primitive 값이 저장되지 않나 싶다.</u>
+
+```javascript
+let myStr = '안녕하세요!';
+
+console.log(
+  myStr.length,
+  myStr[0],
+  myStr[myStr.length - 1]
+);
+```
+
+```javascript
+myStr[myStr.length - 1] = '?';
+console.log(myStr); // 💡 배열과 달리 그대로 //'안녕하세요!'
+```
+
+
+
+주요 인스턴스 메서드
+
+toUpperCase, toLowerCase, charAt, at, indexOf, lastIndexOf, includes, startsWith, endsWith, search, substring, slice, split, trim, repeat, replaceAll
+
+* at은 음수로 뒤에서부터 접근 가능 (-1부터)
+
+  * splitted.at(-1) 로도 쓸 수 있다.
+
+* 정규식을 활용한 search 메서드의 예
+
+  ```javascript
+  console.log(
+    '하루가 7번 지나면 1주일이 되는 거야.'.search(/[0-9]/),
+    '하루가 일곱 번 지나면 일주일이 되는 거야.'.search(/[0-9]/)
+  );
+  
+  //4
+  //1
+  ```
+
+  
+
+* split 주목
+
+  ```javascript
+  console.log(
+    '010-1234-5678'.split('-'),
+    'ABC1DEF2GHI3JKL'.split(/[0-9]/)
+  )
+  
+  //['010', '1234', '5678']
+  //['ABC', 'DEF', 'GHI', 'JKL']
+  
+  // 인자로 빈 문자열을 넣거나 인자 생략시
+  const word = '안녕하세요';
+  
+  console.log(
+    word.split(''),
+    word.split()
+  );
+  
+  //['안', '녕', '하', '세', '요']
+  //['안녕하세요']
+  ```
+
+  두번째 인자로 split() 함수의 return 결과물의 출력하고싶은 길이를 받을 수 있다.
+
+  ```javascript
+  const word = '하나 하면 할머니가 지팡이 짚고서 잘잘잘';
+  
+  console.log(
+    word.split(' ', 2),
+    word.split(' ', 4)
+  );
+  
+  //['하나', '하면']
+  //['하나', '하면', '할머니가', '지팡이']
+  ```
+
+* replace, replaceAll 주목
+
+  * replaceAll은 정규표현식으로 인자를 넘기지 않아도, 마치 정규표현식을 인자로 받은 것처럼 실행되는 것이 replace와의 차이점
+
+    ```javascript
+    const word = '밥 좀 먹자, 밥. 응? 야, 밥 좀 먹자고 밥, 밥!';
+    
+    console.log(word.replace('밥', '라면'));
+    console.log(word.replace(/밥/g, '라면'));
+    
+    //라면 좀 먹자, 밥. 응? 야, 밥 좀 먹자고 밥, 밥!   
+    //	=> 즉, 첫번째 부분의 밥만 치환된다.
+    
+    //라면 좀 먹자, 라면. 응? 야, 라면 좀 먹자고 라면, 라면!
+    //	=> 모든 부분의 밥이 치환되며, 이 때 정규식을 활용한다.
+    ```
+
+    ```javascript
+    console.log(word.replaceAll('밥', '라면'));
+    console.log(word.replaceAll(/밥/g, '라면'));
+    
+    //라면 좀 먹자, 라면. 응? 야, 라면 좀 먹자고 라면, 라면!
+    //라면 좀 먹자, 라면. 응? 야, 라면 좀 먹자고 라면, 라면!
+    
+    //	=> 즉, replaceAll() 함수를 쓰게 되면, 인자로 문자열을 넘겨받아도 마치 정규식을 넘겨받은 것처럼 동작한다
+    ```
+
+    정규표현식으로 써야, 모든 "밥"이 "라면" 으로 치환된다. (단, replaceAll() 을 쓸 경우, 정규표현식을 쓰지 않아도 된다.)
+
+
+
+메서드 체이닝
+
+* 메서드 체이닝을 안 쓴다면, 코드가 굉장히 지저분해진다.
+
+  ```javascript
+  const word = ' 모두 HELLO! ';
+  const rpFrom = 'hello';
+  const rpTo = 'bye';
+  
+  console.log(
+    word
+    .trimStart()                // '모두 HELLO! '
+    .toLowerCase()              // '모두 hello! '
+    .replaceAll(rpFrom, rpTo)   // '모두 bye! '
+    .toUpperCase()              // '모두 BYE! '
+    .repeat(3)                  // '모두 BYE! 모두 BYE! 모두 BYE! '
+    .trimEnd()                  // '모두 BYE! 모두 BYE! 모두 BYE!'
+  );
+  ```
+
+
+
+### Number 객체
+
+```javascript
+// 특정 숫자값으로 인식되는 것
+console.log(
+  new Number('-123.4567'), // Number {-123.4567}
+  new Number('Infinity'),  // Number {Infinity}
+  new Number(true),		   // Number {1}
+  new Number(false)		   // Number {0}
+);
+
+// Number {NaN} 으로 반환된다.
+console.log(
+  new Number('1/2'),
+  new Number('123ABC'),
+  new Number('ABC'),
+  new Number('{a: 1, b: 2}'),
+  new Number([1, 2, 3])
+);
+
+const num1 = Number('123');
+const num2 = Number('-123.45');
+const num3 = Number(true);
+const num4 = Number(false);
+const num5 = Number(null);
+
+
+console.log(typeof num1, num1); //number 123
+console.log(typeof num2, num2); //number -123.45
+console.log(typeof num3, num3); //number 1
+console.log(typeof num4, num4); //number 0
+console.log(typeof num5, num5); //number 0
+```
+
+
+
+정적 프로퍼티
+
+* EPSILON
+  * 정의 : Number 형으로 표현 가능한 1보다 큰 수 중, 가장 작은 수 - 1
+    * 즉, 부동소숫점 계산의 오차를 해결하기 위해서 사용된다.
+
+
+```javascript
+console.log((0.1 + 0.2) - 0.3 < Number.EPSILON) //true
+```
+
+* 그외 기능들
+  * `Number.MAX_SAFE_INTEGER` 과 `Number.MIN_SAFE_INTEGER` 는 부동 소숫점 체계에서 "안정적으로"나타낼 수 있는 가장 큰 수와 작은 수를 의미한다고 한다. 
+
+
+```javascript
+console.log(Number.MAX_VALUE);
+console.log(Number.MIN_VALUE);
+
+console.log(Number.MAX_SAFE_INTEGER);
+console.log(Number.MIN_SAFE_INTEGER);
+
+console.log(Number.POSITIVE_INFINITY);
+console.log(Number.NEGATIVE_INFINITY);
+
+console.log(Number.NaN);
+```
+
+
+
+정적 메서드
+
+```javascript
+//2개의 메서드 차이는, 타입 변환을 암묵적으로 하냐 안 하냐의 차이
+
+console.log(
+  isFinite(null), //true // null을 0으로 변환 //전역 객체 메서드
+  Number.isFinite(null) //false
+);
+
+console.log(
+  isNaN('abc'), //true // 숫자타입의 NaN으로 변환 //전역 객체 메서드
+  Number.isNaN('abc') //false // 숫자타입 자체가 아니므로 false
+);
+
+```
+
+이외 수많은 정적 메서드
+
+
+
+인스턴스 메서드
+
+* toExponential()
+  * 어떠한 실수를 a * 10^n 꼴로 나타낸다.
+
+```javascript
+const numInExp = (123.456789).toExponential();
+console.log(
+  typeof(numInExp), numInExp
+);
+//string 1.23456789e+2
+
+// 인자로 자릿수 제한
+console.log(
+  (123.456789).toExponential(2),
+  (123.456789).toExponential(4),
+  (123.456789).toExponential(6)
+);
+//1.23e+2 1.2346e+2 1.234568e+2
+
+console.log(
+  // 인자가 없으면 0을 받은 것과 같음
+  (111.234567).toFixed(),
+  (111.234567).toFixed(0),
+  (111.234567).toFixed(1)
+);
+//111 111 111.2
+
+console.log(
+  // 인자가 없으면 toString처럼 그대로 문자열로 반환
+  (1234.56789).toPrecision()
+);
+//1234.56789
+
+// 인자가 정수부 자릿수보다 적으면 지수로
+console.log(
+  (1234.56789).toPrecision(1),
+  (1234.56789).toPrecision(2),
+  (1234.56789).toPrecision(3),
+  (1234.56789).toPrecision(6)
+);
+//1e+3 1.2e+3 1.23e+3 1234.57
+
+// 반올림
+console.log(
+  (1234.56789).toPrecision(4),
+  (1234.56789).toPrecision(6),
+  (1234.56789).toPrecision(8)
+);
+//1235 1234.57 1234.5679
+
+//10진법의 수를 n진법으로 바꾸어서 문자열로 출력
+console.log(
+  (11).toString(),
+  (11).toString(2),
+  (11).toString(8),
+  (11).toString(16)
+);
+//11 1011 13 b
+```
+
+
+
+//부동소숫점을 다룰 때, 실전에서는, 라이브러리를 사용
+
+//toFixed()를 적용했을 때, Number 형태로 받고 싶다면 Number()로 감싸거나, Object 형태로 받고 싶다면 new Number() 로 감싸기.
+
+
+
+* 그 외 의문사항들
+
+  * 컴퓨터 내부에서 +와 *의 원리가 다르게 적용되는 듯 하다.
+
+    * 단적인 예로, 아래의 코드를 보자
+
+      ```javascript
+      console.log(0.3+0.3+0.3+0.3+0.3+0.3+0.3+0.3+0.3+0.3 == 3); //false
+      console.log(0.3*10 == 3); //true
+      ```
+
+    * 아래 사이트가 그 해답이 되지 않을까 싶다
+
+      * 곱하기와 더하기의 원리가 미세하게 차이나서? 그러지 않을까 생각한다
+      * 출처 : https://beramodo.tistory.com/1
+
+
+
+### Math 객체
+
+생성자 함수로 작동하지 않음. 
+
+Number 타입만 지원하며, BigInt는 사용 불가
+
+
+
+//난수 생성 시, 보다 더 엄격한 메서드를 쓸 것을 권함.
+
+
+
+```javascript
+for (let i = 0; i < 10; i++) {
+  console.log(Math.random());
+}
+```
+
+
+
+### Date 객체
+
+```javascript
+const now = new Date();
+
+console.log(typeof now); //object
+console.log(now); //Mon Oct 09 2023 17:54:03 GMT+0900 (한국 표준시)
+```
+
+의문사항 
+
+* Date 함수는 인자를 여러 개 받을 수 있던데, 원리가 어떻게 될까
+
+  * 우선 Date 함수는 아래와 같이 여러 개의 인자를 받을 수 있다.
+
+    ```javascript
+    new Date();
+    new Date(value);
+    new Date(dateString);
+    
+    new Date(year, monthIndex);
+    new Date(year, monthIndex, day);
+    new Date(year, monthIndex, day, hours);
+    new Date(year, monthIndex, day, hours, minutes);
+    new Date(year, monthIndex, day, hours, minutes, seconds);
+    new Date(year, monthIndex, day, hours, minutes, seconds, milliseconds);
+    ```
+
+    * 출처 : https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Date/Date
+
+  * 하지만 콘솔창에 Date 객체를 찍어보면, 아래와 같이 인자를 받지 않은 함수임을 알 수 있다.
+
+    ```javascript
+    console.log(Date);
+    //ƒ Date() { [native code] }
+    ```
+
+    => native 코드로 이루어져 있어서, 해당 부분까지 파악하기에는 너무 깊은 level이라고 판단함.
+
+    => 그러나, 코드 내부적으로 인자를 여러개 받았을 때 무언가.... 대처하는 코드가 있지 않을까 싶다.
+
+    
+
+핵심은, 현재 시간을 UTC 방식이나 한국식 방식으로 표현 시, 어떤 차이가 있는지에 관한 것이다. 
+
+```JAVASCRIPT
+console.log(Date.now()); //현재의 시스템 시간(한국 시간)이 나온다.
+```
+
+```JAVASCRIPT
+//첫번째 코드는 UTC시간을 형성한다.
+////따라서, Date.parse('January 1, 1970 00:00:00 UTC') 입력시 0이 나온다.
+console.log(
+  Date.parse('August 20, 2022 00:00:00 UTC')
+);
+
+//두번째 코드는 한국시간을 형성하므로, UTC시간으로 변환시 -9시간 이 적용된다.
+//따라서, Date.parse('January 1, 1970 00:00:00') 입력시 0이 아니라 시차만큼(ms) 나온다.
+console.log(
+  // 💡 시스템(실행 컴퓨터) 시간이 한국이면 시차 9시간 적용
+  Date.parse('August 20, 2022 09:00:00')
+);
+
+//아래의 코드는, 정확히 UTC 시간대를 형성하므로, Date.UTC(1970,0,0,0,0,0) 을 입력하면 결과값이 0이 된다.
+console.log(
+  // ⭐️ 월은 0부터 시작
+  Date.UTC(2022, 7, 20, 0, 0, 0)
+);
+
+//밀리초는 화면상으로는 나타내지 않는다.
+```
+
+
+
+인스턴스 메서드
+
+```javascript
+const now = new Date();
+
+console.log(
+  now.toString()
+); //시스템 언어 설정대로, 날짜와 시간이 문자열 형식으로 출력된다.
+// 결과 : Thu Jun 22 2023 13:03:09 GMT+0900 (한국 표준시)
+```
+
+```javascript
+//날짜를 언어 형식에 따라 다르게 나타내기
+//현재 웹브라우저에서는, 한국에서 사용하는 날짜와 시간 방식을 기본으로 채택하므로, toLocaleString() 에 아무 인자도 넘기지 않아도 된다.
+
+console.log(
+  now.toLocaleString()
+);
+
+console.log(
+  now.toLocaleString('ko-KR')
+);
+
+console.log(
+  now.toLocaleString('en-US')
+);
+
+//2023. 10. 9. 오후 9:40:13
+//2023. 10. 9. 오후 9:40:13
+//10/9/2023, 9:40:13 PM
+```
+
+
+
+그리고, Date 객체를 활용해서 년,월,일,시간 정보를 조회/수정할 수 있다. (getter, setter 메서드 활용)
+
+```javascript
+const now = new Date();
+
+const year = now.getFullYear();
+const month = now.getMonth() + 1;
+const date = now.getDate();
+const day = '일월화수목금토'[now.getDay()];
+
+console.log(
+  `오늘은 ${year}년 ${month}월 ${date}일, ${day}요일입니다.`
+);
+```
+
+
+
+또한, getTime과 setTime을 이용하여 밀리초 숫자값을 얻을 수 있다.
+
+```javascript
+const date1 = new Date(2020, 7, 20);
+const date1value = date1.getTime();
+
+console.log(date1.toString());
+console.log(date1value);
+```
+
+```javascript
+const date2 = new Date();
+
+console.log(date2.toString());
+```
+
+```javascript
+date2.setTime(date1value);
+
+console.log(date2.toString());
+```
+
+
+
+그리고 UTC 시간과 시스템의 시간대에 대한 차이를 getTimezoneOffset() 으로 획득하고, 이를 이용하여 UTC 기준의 시간을 시스템 시간대로 바꿔보자
+
+```JAVASCRIPT
+const now = new Date();
+const timezoneOffset = now.getTimezoneOffset() * 60 * 1000; //밀리세컨 반환
+
+const isoStr = new Date(now.getTime() - timezoneOffset).toISOString(); //시스템 시간대로 변환
+
+
+console.log(isoStr); //시스템 시간(한국시간대)로 변환 //2023-10-09T21:40:13.596Z
+console.log(now.toString()); // Mon Oct 09 2023 21:40:13 GMT+0900 (한국 표준시)
+
+//isoStr.split('T'); 를 활용해서 날짜 parsing을 할 수 있다.
+```
+

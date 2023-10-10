@@ -3985,3 +3985,551 @@ console.log(now.toString()); // Mon Oct 09 2023 21:40:13 GMT+0900 (한국 표준
 //isoStr.split('T'); 를 활용해서 날짜 parsing을 할 수 있다.
 ```
 
+
+
+## 섹션 7. 배열
+
+### 자바스크립트 배열의 특징과 생성
+
+자바 스크립트의 배열은 아래의 "특별한" 특징이 있다.
+
+* 연속 나열이 아닌 편이다. (엔진에 따라 다를 수 있음 ) 
+  * 해쉬 테이블로 구현되어 있다.
+  * 특정 배열은 그렇기도 하지만 다루지 않겠음
+
+* 한 배열에 다양한 자료형의 데이터가 들어갈 수 있다.
+* 접근이 느림. but, 중간 요소의 추가나 제거는 빠름
+
+
+
+배열을 생성할 때는 아래의 과정을 거친다.
+
+* 배열 리터럴, 생성자 함수
+
+* 출처
+  * [Array() 생성자 - JavaScript | MDN (mozilla.org)](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/Array)
+
+
+
+배열 리터럴
+
+```javascript
+const arr1 = []; // 빈 배열
+const arr2 = [1, 2, 3];
+const arr3 = [1, , 2, , 3] // 빈 요소(undefined) 표함 배열 생성
+
+console.log(arr1.length, arr1);
+console.log(arr2.length, arr2);
+console.log(arr3.length, arr3);
+
+// 0 []
+// 3 (3) [1, 2, 3]
+// 5 (5) [1, 비어 있음, 2, 비어 있음, 3]
+
+console.log(arr3[1]); 
+//undefined          => 빈 요소를 조회할 때 발생
+```
+
+
+
+생성자 함수
+
+* 확인해보니, Array 또한 native code이다.
+
+```javascript
+const arr = new Array();
+
+console.log(arr);
+console.log(arr.length);
+
+//[]
+//0
+```
+
+```javascript
+//숫자 1개짜리 인자를 전달받으면, 아래와 같이 빈 배열이 만들어진다
+
+const arr = new Array(3); //길이 3짜리 빈 배열이 만들어짐.
+
+console.log(arr);
+console.log(arr.length);
+
+// [빈 ×3]
+// 3
+```
+
+
+
+```javascript
+//인자가 2개 이상이거나, 숫자가 아닌 인자를 전달받는 경우
+
+const arr1 = new Array(1, 2, 3);
+const arr2 = new Array('ABC');
+const arr3 = new Array(true);
+
+console.log(arr1); //길이 3짜리 배열이 만들어짐
+console.log(arr2); //길이 1짜리 배열이 만들어짐
+console.log(arr3); //길이 1짜리 배열이 만들어짐
+
+//(3) [1, 2, 3]
+// ['ABC'] 
+// [true]
+```
+
+
+
+정적 메서드 of
+
+* Array.of() 를 활용해서도 새로운 Array 객체를 생성할 수 있다.
+  * 생성자 함수 Array를 통해 Array 객체를 생성하는 것과의 "유일한" 차이는, 인자로 하나의 숫자만 받는 경우이다.
+
+```javascript
+// 인자가 하나의 숫자라도 이를 요소로 갖는 배열 생성
+const arr1 = Array.of(3);
+
+const arr2 = Array.of(1, 2, 3);
+const arr3 = Array.of('ABC', true, null);
+
+console.log(arr1);
+console.log(arr2);
+console.log(arr3);
+
+// [3]
+// [1,2,3]
+// ['ABC', true, null]
+```
+
+
+
+정적 메서드 from
+
+* 인자로서 배열, 유사배열, 이터러블 객체를 받아서 shallow copy한 객체를 반환
+
+  * 또한, 위에서 받은 인자의 각 요소를 순회하여, 적당히 가공된 배열/유사배열/이터러블 객체를 반환할 수도 있다.
+
+    => 이것은 인자로서 화살표 함수를 추가로 받아서 구현한다.
+
+* 출처 : [Array.from() - JavaScript | MDN (mozilla.org)](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Array/from)
+
+```javascript
+const arr1 = Array.from([1, 2, 3]);
+const arr2 = Array.from('ABCDE');
+const arr3 = Array.from({
+  '0': true,
+  '1': false,
+  '2': null,
+  length: 3
+});
+
+console.log(arr1);
+console.log(arr2);
+console.log(arr3);
+
+// [1,2,3]
+// ['A', 'B', 'C', 'D', 'E']
+// [true, false, null]
+```
+
+=> 배열, 유사배열객체, 이터러블을 인자로 받아서 배열로 반환한다.
+
+=> 유사배열객체를 Array.from()을 하게 되면, for ~ of문을 쓸 수 있게 된다. (배열로 바뀌었으므로.)
+
+```javascript
+const arrLike = {
+  0: '🍎',
+  1: '🍌',
+  2: '🥝',
+  3: '🍒',
+  4: '🫐',
+  length: 5
+};
+
+// 일반 for문으로 순회 가능
+for (let i = 0; i < arrLike.length; i++) {
+  console.log(arrLike[i]);
+}
+```
+
+```javascript
+// 배열은 이터러블, 성능도 향상
+for (const item of Array.from(arrLike)) {
+  console.log(item);
+}
+```
+
+
+
+Array.from() => 얕은 복사기능도 수행한다.
+
+```javascript
+const arr1 = [1, 2, 3];
+const arr2 = Array.from(arr1);
+arr2.push(4);
+
+console.log(arr1, arr2);
+//[1,2,3] [1,2,3,4]
+```
+
+```javascript
+//얕은 복사
+const arr1 = [{x: 1}, {x: 2}];
+const arr2 = Array.from(arr1);
+arr2.push({x: 3});
+
+// 참조타입 요소의 내부값이 바뀔 경우
+arr1[0].x = 0;
+console.log(arr1, arr2);
+
+// [{x:0}, {x:2}] [{x:0}, {x:2}, {x:3}]
+```
+
+
+
+Array.from()의 두번째 인자로서, 매핑 함수를 받아서 아래와 같이 조작이 가능하다.
+
+```javascript
+const arr1 = [1, 2, 3, 4, 5];
+const arr2 = Array.from(arr1, x => x + 1);
+const arr3 = Array.from(arr1, x => x * x);
+const arr4 = Array.from(arr1, x => x % 2 ? '홀' : '짝');
+
+console.log(arr2); //[2,3,4,5,6]
+console.log(arr3); //[1,4,9,16,25]
+console.log(arr4); //['홀', '짝', '홀', '짝', '홀']
+```
+
+
+
+### 배열의 기본 메서드들
+
+//Array.isArray 가 더 권장된다. (iframe에서도 작동되므로)
+
+=> instanceof Array 와의 차이점은, Array.prototype 을 false/true로 해석하는 차이가 있다.
+
+*=> (내 생각) 직접 `console.log(Array.prototype)` 을 찍으면, `__proto__` 의 타입이 Object라고 뜨는 것이 원인이 아닐까 싶다.*
+
+*=> `console.log(new Array(8,2))` 를 찍어보면, `__proto__` 프로퍼티가 정확하게 Array.prototype 을 가리키는 것이 하나의 힌트가 되지 않을까 생각한다.*
+
+```javascript
+const arrays = [
+  [], [1, 2, 3], new Array(),
+  // ⚠️ instanceof에서는 결과가 다름
+  Array.prototype // 배열임
+];
+
+const notArrays = [
+  1, 'abc', true, null, {}
+];
+
+for (const item of arrays) {
+  console.log(
+    item,
+    Array.isArray(item),
+    item instanceof Array
+  );
+}
+
+// [] true true
+// [1, 2, 3] true true
+// [] true true
+// [constructor: ƒ, at: ƒ, concat: ƒ, copyWithin: ƒ, fill: ƒ, …] true false
+```
+
+그 외 메서드
+
+at, includes, indexOf, lastIndexOf, join
+
+=> 배열의 특정 원소를 찾거나, 해당 원소의 index를 찾거나, 구분자를 사용하여 배열의 요소들을 string으로 표현할 때 사용한다.
+
+```javascript
+//includes()
+//true,false,false,false
+//참조형 데이터의 경우, 주솟값이 다르다.
+
+const obj1 = { x: 1, y: 2 };
+const obj2 = { x: 1, y: 2 };
+
+const arr = [
+  obj1,
+  { x: 3, y: 4 }
+];
+
+console.log(
+  arr.includes(obj1),
+  arr.includes(obj2),
+  arr.includes({ x: 1, y: 2 }),
+  arr.includes({ x: 3, y: 4 })
+);
+//true false false false
+//	console.log(arr[1] === { x: 3, y: 4 }) 가 false가 나온다.
+//	=> 아마, 메모리 주소로서 접근하는 것이 아닌가 생각된다.
+```
+
+join() 메서드는 아래와 같이 쓸 수 있다.
+
+* 특이한 점은, 요소로서 객체가 들어가는 경우에는 [object Object]로 읽어들인다
+
+  => (내 생각) 해당 변수에 들어있는 값으로 판단하는 것이 아닌가 생각된다.
+
+  (값이 primitive value이면 그대로 값을 취하나, 그렇지 않고 메모리 주소값인 경우에는 [object Object]나 배열의 문자화로 취급하는 것이 아닐까 생각한다.)
+
+ ```javascript
+//join()
+
+const arr1 = ['a', 'b', 'c', 'd', 'e'];
+const arr2 = [
+  1, true, null, undefined, '가나다', { x: 0 }, [1, 2, 3]
+];
+
+console.log(
+  arr1.join() // 인자가 없다면 쉼표`,`로
+);
+//a,b,c,d,e
+
+console.log(
+  arr1.join('')
+);
+//abcde
+
+console.log(
+  arr1.join(' ')
+);
+//a b c d e
+
+console.log(
+  arr2.join(':')
+);
+//1:true:::가나다:[object Object]:1,2,3
+ ```
+
+활용 예시
+
+```javascript
+console.log(
+  classIntro(3, '김민지', '영희', '철수', '보라')
+); // 호이스팅
+
+function classIntro (classNo, teacher, ...children) {
+
+  // [ 4-3강 예제 ]
+
+  // let childrenStr = '';
+  // for (const child of children) {
+  //   if (childrenStr) childrenStr += ', ';
+  //   childrenStr += child;
+  // }
+  // return `${classNo}반의 선생님은 ${teacher}, `
+  //   + `학생들은 ${childrenStr}입니다.`
+
+  return `${classNo}반의 선생님은 ${teacher}, `
+    + `학생들은 ${children.join(', ')}입니다.`
+}
+
+//3반의 선생님은 김민지, 학생들은 영희, 철수, 보라입니다.
+```
+
+
+
+코드 예시 (replace 메서드 쓰지 않는 방법)
+
+```javascript
+'010-1234-5678'.split('-').join('.');
+```
+
+
+
+배열을 변경하는 기본 메서드
+
+push, unshift, pop, shift, splice, fill, reverse
+
+=> 배열의 맨 첫번쨰/ 맨 마지막에 원소를 추가하거나, 추출하거나, 배열 자체에 대해 동일한 원소로 요소를 가득 매운다든가, 배열 요소의 순서를 거꾸로 한 배열을 반환할 때 사용한다.
+
+```javascript
+const arr = [1, 2, 3, 4, 5, 6, 7];
+
+// 2번 인덱스부터 2개 요소 제거
+arr.splice(2, 2);
+
+console.log(arr);
+
+// 3번 인덱스부터 요소 제거 없이 'a' 추가
+arr.splice(3, 0, 'a');
+
+console.log(arr);
+
+// 1번 인덱스부터 3개 요소 제거 후 '가', '나', '다' 추가
+arr.splice(1, 3, '가', '나', '다');
+
+console.log(arr);
+```
+
+delete 는 결국, 해당 인덱스 자체를 지우지 않고, "비어 있음" 으로만 남게 된다.
+
+=> 따라서, 제대로 지우려면 splice를 사용하기. (이 때에는, 해당 index 의 메모리가 제거가 된다.)
+
+```javascript
+const arr = [1, 2, 3, 4, 5];
+delete arr[2]; //arr[2]에는 undefined라는 값이 남아있게 된다.
+
+console.log(arr); //길이 5짜리 배열이다.
+
+//[1, 2, 비어 있음, 4, 5]
+//0: 1
+//1: 2
+//3: 4
+//4: 5
+//length: 5
+//[[Prototype]]: Array(0)
+
+console.log(arr[2]); //undefined
+
+
+//아래의 경우는 splice를 쓰는 경우
+const arr2 = [1, 2, 3, 4, 5];
+arr2.splice(2, 1);
+
+console.log(arr2);
+
+//[1, 2, 4, 5]
+//0: 1
+//1: 2
+//2: 4
+//3: 5
+//length: 4
+//[[Prototype]]: Array(0)
+
+```
+
+fill
+
+```javascript
+// 중간의 빈 값도 채움
+const arr1 = [1, 2, , , 4, 5];
+arr1.fill(7);
+
+console.log('1.', arr1);
+
+// 💡 특정 값으로 채운 배열 생성시 유용
+const arr2 = new Array(10);
+arr2.fill(1);
+
+console.log('2.', arr2);
+
+// 인자가 둘일 때: (채울 값, ~부터)
+arr2.fill(2, 3);
+
+console.log('3.', arr2);
+
+// 인자가 셋일 때: (채울 값, ~부터, ~ 전까지)
+arr2.fill(3, 6, 9);
+
+console.log('4.', arr2);
+```
+
+
+
+참고사항
+
+* arr.push() => 원본 배열을 조작하여 반환
+
+* 배열의 스프레드 => 새로운 배열을 생성해서 반환
+
+
+
+새 배열을 반환하는 기본 메서드들
+
+* concat, splice, flat 등
+
+  * 원본 배열을 수정하지 않는다.
+
+  * 기본적으로 얕은 복사본이다.
+
+
+
+
+concat
+
+* 최종적으로 1개의 배열을 반환하는 함수이다
+  * 2개 이상의 배열 또는 값을 인자로 받아서, 인자의 모든 요소(값)을 1개의 배열에 넣는다.
+    * arr1 배열 뒤쪽에 넣는 방식으로 구현된다. (기존 arr1 배열은 변하지 않는다.)
+
+```javascript
+const arr1 = [1, 2, 3];
+const arr2 = ['a', 'b', 'c'];
+const arr3 = [true, false];
+
+const arr4 = arr1.concat(arr2);
+console.log(arr4);
+// [1, 2, 3, 'a', 'b', 'c']
+
+
+const arr5 = arr1.concat(arr2, 3);
+console.log(arr5);
+//[1, 2, 3, 'a', 'b', 'c', 3]
+
+const arr6 = arr1.concat('ABC', arr2, arr3, 100);
+console.log(arr6);
+//[1, 2, 3, 'ABC', 'a', 'b', 'c', true, false, 100]
+
+// ⭐️ 원본 배열들에는 변화 없음
+console.log(arr1, arr2, arr3);
+//[1, 2, 3] ['a', 'b', 'c'] [true, false]
+```
+
+slice
+
+* 1개의 배열을 반환하며, arr1의 연속된 특정 요소들을 뽑아내어 return 할 배열에 담는다.
+
+```javascript
+const arr1 = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+const arr2 = arr1.slice(3);
+const arr3 = arr1.slice(3, 7);
+
+console.log(arr2, arr3);
+//[4, 5, 6, 7, 8, 9] [4, 5, 6, 7]
+
+// 원본에는 변화 없음
+console.log(arr1);
+```
+
+flat
+
+* 1개의 배열을 반환하며, 배열 내 요소 중 배열이 있으면, 이를 다시 요소로 담아서 반환한다.
+  * 인자로 숫자를 받으며, 이는 배열 내의 배열을 "몇 단계까지" flat화 할 것인지에 대한 정보이다.
+
+```javascript
+const orgArr = [
+  1, 2,
+  [3, 4],
+  [5, [6, [7, 8]]]
+];
+
+// 인자가 없으면 1을 넣은 것과 같음
+const arr0 = orgArr.flat();
+const arr1 = orgArr.flat(1);
+
+const arr2 = orgArr.flat(2);
+const arr3 = orgArr.flat(3);
+
+console.log('N:', arr0);
+console.log('1:', arr1);
+console.log('2:', arr2);
+console.log('3:', arr3);
+
+//N: (6) [1, 2, 3, 4, 5, Array(2)]
+//1: (6) [1, 2, 3, 4, 5, Array(2)]
+//2: (7) [1, 2, 3, 4, 5, 6, Array(2)]
+//3: (8) [1, 2, 3, 4, 5, 6, 7, 8]
+
+
+
+// 원본에는 변화 없음
+console.log('org:', orgArr);
+```
+
+
+
+//slice()는 splice() 와 달리, 부수효과가 발생하지 않는다.
+
+//flat()을 이용해서 완전히 다 풀려면, 인자값을 굉장히 크게 주면 된다.

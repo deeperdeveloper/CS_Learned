@@ -4533,3 +4533,492 @@ console.log('org:', orgArr);
 //slice()는 splice() 와 달리, 부수효과가 발생하지 않는다.
 
 //flat()을 이용해서 완전히 다 풀려면, 인자값을 굉장히 크게 주면 된다.
+
+
+
+
+
+### 고차함수 메서드들
+
+forEach() => 기본적으로 인자 3개를 받음. (value, idx, arr)
+
+forEach()는 콜백함수의 실행이 목적이지, 결과값을 원하는 목적은 아니므로, undefined가 출력된다.
+
+```javascript
+const arr = [1, 2, 3, 4, 5];
+
+const result = arr.forEach(itm => {
+  console.log(itm);
+});
+//1
+//2
+//3
+//4
+//5
+```
+
+```javascript
+const arr = [10, 20, 30, 40, 50];
+
+// 콜백함수의 인자가 둘일 때
+arr.forEach((itm, idx) => {
+  console.log(itm, idx);
+});
+//10 1
+//20 2
+//30 3
+//40 4
+//50 5
+```
+
+forEach()의 인자로, 함수 객체 그 자체만 넘겨도, 실행이 가능하다
+
+```javascript
+const arr = [1, 2, 3, 4, 5];
+
+// 현존하는 함수를 인자로 - 💡 결과 살펴볼 것
+arr.forEach(console.log);
+
+//1 0 [1, 2, 3, 4, 5]
+//2 1 [1, 2, 3, 4, 5]
+//3 2 [1, 2, 3, 4, 5]
+//4 3 [1, 2, 3, 4, 5]
+//5 4 [1, 2, 3, 4, 5]
+```
+
+
+
+```javascript
+const arr = [1, 2, 3, 4, 5];
+
+// 콜백함수의 인자가 셋일 때
+arr.forEach((itm, idx, arr) => {
+  // 💡 세 번째 인자는 원본 배열의 참조임
+  arr[idx]++;
+  console.log(itm);
+});
+
+//1
+//2
+//3
+//4
+//5
+
+
+
+// 위의 코드의 arr[idx]++ 로 인해, arr원본의 내용이 변경되게 된다.
+console.log(arr);
+//[2,3,4,5,6]
+```
+
+
+
+map()
+
+* 결과물은 1개의 새로운 배열을 반환
+  * 인스턴스로 받은 배열을, 인자로 받은 함수에 의해서 새로운 배열을 탄생시킨다.
+
+```javascript
+const orgArr = [1, 2, 3, 4, 5];
+
+// ⭐️ 각 콜백함수는 어떤 값을 반환해야 함
+const arr1 = orgArr.map(i => i + 1);
+const arr2 = orgArr.map(i => i * i);
+const arr3 = orgArr.map(i => i % 2 ? '홀수' : '짝수');
+
+console.log(arr1);
+console.log(arr2);
+console.log(arr3);
+
+// [2, 3, 4, 5, 6]
+// [1, 4, 9, 16, 25]
+// ['홀수', '짝수', '홀수', '짝수', '홀수']
+```
+
+```javascript
+const orgArr = [
+  { name: '사과', cat: '과일', price: 3000 },
+  { name: '오이', cat: '채소', price: 1500 },
+  { name: '당근', cat: '채소', price: 2000 },
+  { name: '살구', cat: '과일', price: 2500 },
+  { name: '피망', cat: '채소', price: 2500 },
+  { name: '딸기', cat: '과일', price: 5000 }
+];
+
+
+const arr1 = orgArr.map(itm => {
+  // 💡 블록 안에서는 return 문 필요함
+  return {
+    name: itm.name,
+    cat: itm.cat
+  }
+});
+
+console.log(arr1);
+
+//[{name: '사과', cat: '과일'},{name: '오이', cat: '채소'},{name: '당근', cat: '채소'},{name: '살구', cat: '과일'},{name: '피망', cat: '채소'},{name: '딸기', cat: '과일'}]
+
+
+// 디스트럭쳐링 사용 (편의에 따라 적절히)
+// 결과는 위와 똑같다.
+const arr2 = orgArr.map(({name, cat}) => {
+  return { name, cat }
+});
+
+console.log(arr2);
+
+//2번째 인자 사용
+const joined = orgArr
+.map(({name, cat, price}, idx) => {
+  return `${idx + 1}: [${cat[0]}] ${name}: ${price}원`
+})
+.join('\n - - - - - - - - - \n');
+
+console.log(joined);
+
+
+//1: [과] 사과: 3000원
+// - - - - - - - - - 
+//2: [채] 오이: 1500원
+// - - - - - - - - - 
+//3: [채] 당근: 2000원
+// - - - - - - - - - 
+//4: [과] 살구: 2500원
+// - - - - - - - - - 
+//5: [채] 피망: 2500원
+// - - - - - - - - - 
+//6: [과] 딸기: 5000원
+```
+
+=> 화살표 사용 함수에서, 블록문 안에서는, return 문이 필요하다.
+
+
+
+find, findLast, findIndex, findLastIndex
+
+* 인자로서 콜백함수를 받으며, 해당 콜백함수는 아래와 같이 동작한다
+
+  * true 또는 false를 받는다
+
+  * 배열의 각 요소를 콜백함수의 인자로 받는다
+
+    => 이 때, 콜백함수의 결과물이 true일 때, 콜백함수를 인자로 받았던 함수는, 해당 요소 또는 해당 요소의 index를 반환한다.  
+
+```javascript
+const arr = [1, 2, '삼', 4, 5, 6, '칠', 8, 9];
+
+const isString = i => typeof i === 'string';
+const isBoolean = i => typeof i === 'boolean';
+
+console.log(
+  arr.find(isString),
+  arr.findLast(isString),
+  arr.findIndex(isString),
+  arr.findLastIndex(isString)
+);
+// 삼 칠 2 6
+
+// 없을 시 값은 undefined, 인덱스는 -1 반환
+console.log(
+  arr.find(isBoolean),
+  arr.findLast(isBoolean),
+  arr.findIndex(isBoolean),
+  arr.findLastIndex(isBoolean)
+);
+
+//undefined undefined -1 -1
+```
+
+```javascript
+const arr = [
+  { name: '사과', cat: '과일', price: 3000 },
+  { name: '오이', cat: '채소', price: 1500 },
+  { name: '당근', cat: '채소', price: 2000 },
+  { name: '살구', cat: '과일', price: 2500 },
+  { name: '피망', cat: '채소', price: 3500 },
+  { name: '딸기', cat: '과일', price: 5000 }
+];
+
+const isCheapFruit = i => {
+  return i.cat === '과일' && i.price < 3000;
+}
+
+console.log(
+  arr.find(({cat}) => cat === '채소').name,
+  arr.findLast(isCheapFruit).name
+);
+```
+
+
+
+some, every
+
+* 하나의 요소라도 true를 반환하면, some() 의 결과는 true를 반환
+* 모든 요소가 true를 반환해야, every() 의 결과는 true를 반환
+
+```javascript
+const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+
+console.log(
+  arr.some(i => i % 2),
+  arr.every(i => i % 2),
+  arr.some(i => i < 0),
+  arr.every(i => i < 10)
+);
+
+//true false false true
+```
+
+```javascript
+const arr = [
+  { name: '사과', cat: '과일', price: 3000 },
+  { name: '오이', cat: '채소', price: 1500 },
+  { name: '당근', cat: '채소', price: 2000 },
+  { name: '살구', cat: '과일', price: 2500 },
+  { name: '피망', cat: '채소', price: 3500 },
+  { name: '딸기', cat: '과일', price: 5000 }
+];
+
+const isCheapVege = i => {
+  return i.cat === '채소' && i.price < 2000;
+}
+const isPlant = ({cat}) => {
+  return ['과일', '채소'].includes(cat);
+}
+
+console.log(
+  arr.some(isCheapVege),
+  arr.every(isCheapVege),
+  arr.some(isPlant),
+  arr.every(isPlant)
+);
+
+//true false true true
+```
+
+
+
+filter
+
+* 콜백함수를 인자로 받으며, 이 콜백 함수는 필터 로직을 받는다.
+* 해당 콜백 함수를 true로 만드는 요소만 "filtering"하여, 새로운 배열에 담아서 반환한다.
+
+```javascript
+const arr = [
+  { name: '사과', cat: '과일', price: 3000 },
+  { name: '오이', cat: '채소', price: 1500 },
+  { name: '당근', cat: '채소', price: 2000 },
+  { name: '살구', cat: '과일', price: 2500 },
+  { name: '피망', cat: '채소', price: 3500 },
+  { name: '딸기', cat: '과일', price: 5000 }
+];
+
+console.log(
+  '과일 목록:',
+  arr
+  .filter(({cat}) => cat === '과일')
+  .map(({name}) => name)
+  .join(', ')
+);
+
+//과일 목록: 사과, 살구, 딸기
+```
+
+
+
+reduce => 초깃값을 설정하는 것과 그렇지 않은 경우가 존재. 
+
+* 배열의 여러 요소를 순차적으로, 그리고 반복적으로 계산하여 어떤 하나의 값(객체)를 도출해내는데 유용하게 사용되는 함수
+  * 콜백함수를 적용할 때마다의 return 결과물은 prev에 저장된다.
+
+* 초깃값이 별도로 설정되지 않는 경우, 맨 첫번쨰 인자가 prev 값에 할당된다.
+
+  ```javascript
+  //1+2+3... +9를 reduce()를 통해 구현
+  
+  const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  
+  //prev = 1, cur = 2부터 시작
+  console.log(
+    arr.reduce((prev, curr, idx) => {
+      console.log(`p: ${prev}, c: ${curr}, i: ${idx}`);
+      return prev + curr;
+    })
+  );
+  
+  //p: 1, c: 2, i: 1
+  //p: 3, c: 3, i: 2
+  //p: 6, c: 4, i: 3
+  //p: 10, c: 5, i: 4
+  //p: 15, c: 6, i: 5
+  //p: 21, c: 7, i: 6
+  //p: 28, c: 8, i: 7
+  //p: 36, c: 9, i: 8
+  //45
+  
+  //초깃값이 존재하는 경우
+  //prev = 10, cur = 1부터 시작
+  const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  
+  console.log(
+    arr.reduce((prev, curr, idx) => {
+      console.log(`p: ${prev}, c: ${curr}, i: ${idx}`);
+      return prev + curr;
+    }, 10)
+  );
+  
+  //p: 10, c: 1, i: 0
+  //p: 11, c: 2, i: 1
+  //p: 13, c: 3, i: 2
+  //p: 16, c: 4, i: 3
+  //p: 20, c: 5, i: 4
+  //p: 25, c: 6, i: 5
+  //p: 31, c: 7, i: 6
+  //p: 38, c: 8, i: 7
+  //p: 46, c: 9, i: 8
+  //55
+  ```
+
+  아래의 예에서는 prev와 curr은 다음과 같은 의미를 지닌다.
+
+  (★ prev와 curr의 타입이 일치하지 않아도 된다는 것이 keypoint)
+
+  * prev는 초깃값 혹은 이전 콜백함수 실행의 결과물
+    * 초깃값을 꼭 배열의 타입에 맞추지 않아도 된다.
+
+  * curr은 배열의 현재 요소를 의미 (즉 숫자이다)
+
+    * 맨 마지막의 콜백 함수의 실행이 끝나게 되면, 이 때는 curr은 마지막 콜백함수의 결과물이 된다.
+
+      (즉, 여기서는 숫자가 아니라, 객체가 된다.)
+
+  ```javascript
+  const arr = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  
+  // 홀수와 짝수 갯수
+  console.log(
+    arr.reduce((prev, curr) => {
+      return {
+        odd: prev.odd + curr % 2,
+        even: prev.even + (1 - (curr % 2)),
+      }
+    }, { odd: 0, even: 0 })
+  );
+  
+  //{odd: 5, even: 4}
+  ```
+
+  ```javascript
+  const arr = [
+    { name: '사과', cat: '과일', price: 3000 },
+    { name: '오이', cat: '채소', price: 1500 },
+    { name: '당근', cat: '채소', price: 2000 },
+    { name: '살구', cat: '과일', price: 2500 },
+    { name: '피망', cat: '채소', price: 3500 },
+    { name: '딸기', cat: '과일', price: 5000 }
+  ];
+  
+  ['과일', '채소'].forEach(category => {
+    console.log(
+      `${category}의 가격의 합:`,
+      arr
+      .filter(({cat}) => cat === category)
+      .map(({price}) => price)
+      .reduce((prev, curr) => prev + curr)
+    );
+  });
+  
+  // 과일의 가격의 합: 10500
+  // 채소의 가격의 합: 7000
+  ```
+
+  => 여기서, 함수형 프로그래밍이 적용되었음을 알 수 있다.
+
+
+
+
+
+sort는 배열을 (주어진 기준대로) 정렬
+
+=> 원본 배열을 정렬하여 결과값으로 반환한다.
+
+=> 따라서, 원본 배열은 수정된다.
+
+
+
+아래의 경우는, sort() 에 인자를 주지 않아서 일반적인 정렬의 경우를 보여준다.
+
+* 그리고, 암묵적으로 문자형으로 변환하여서 정렬하기 때문에, 숫자형의 경우에는 원치 않은 결과가 나온다.
+
+```javascript
+const arr = ['라', '사', '다', '가', '바', '마', '나'];
+
+arr.sort();
+
+console.log(arr);
+
+//['가', '나', '다', '라', '마', '바', '사']
+```
+
+```javascript
+let randomWord = 'DBKGICAHFEJ';
+
+console.log(
+  randomWord
+  .split('')
+  .sort()
+  // .reverse()
+  .join('')
+);
+
+console.log(randomWord);
+
+//ABCDEFGHIJK
+//DBKGICAHFEJ
+```
+
+```javascript
+// ⚠️ 숫자일 시 문제가 생김
+const arr = [1, 2, 30, 400, 10, 100, 1000];
+console.log(arr.sort());
+
+//[1, 10, 100, 1000, 2, 30, 400]
+```
+
+
+
+배열 내 숫자의 정확한 정렬을 위해서는, 콜백 함수 사용
+
+=> 이는 웹 브라우저마다 정렬을 구현하는 방식이 다르므로, sort() 내부 콜백함수에서 console.log() 를 찍어보면 a와 b가 브라우저마다 다르게 적혀있음을 알 수 있다.
+
+```javascript
+const arr = [4, 2, 3, 1, 5, 6, 7, 8, 9];
+
+// 오름차순 정렬
+console.log(
+  arr.sort((a, b) => {
+    console.log(`a: ${a}, b: ${b}`);
+    return a-b;
+  })
+);
+
+console.log(arr);
+//[1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+//a가 뒤에것, b가 앞에 것을 받는다.
+```
+
+```javascript
+const arr = ['F', 'E', 'I', 'A', 'H', 'C', 'D', 'J', 'G', 'B'];
+
+console.log(
+  arr.sort((a, b) => a > b ? 1 : -1)
+);
+
+//['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+```
+
+*의문사항*
+
+* *sort() 함수가 정확히 어떤 원리로 동작하는지 파악하고 싶다*
+  * *버블 정렬과 같이 단순히 1개의 정렬을 활용한다고 보기에는, a와 b의 값을 추적해보면 그렇지 않다고 느껴서이다.* 

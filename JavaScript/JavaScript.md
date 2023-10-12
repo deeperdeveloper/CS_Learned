@@ -5022,3 +5022,263 @@ console.log(
 
 * *sort() 함수가 정확히 어떤 원리로 동작하는지 파악하고 싶다*
   * *버블 정렬과 같이 단순히 1개의 정렬을 활용한다고 보기에는, a와 b의 값을 추적해보면 그렇지 않다고 느껴서이다.* 
+
+
+
+flatMap => mapping된 결과물을 평평하게 펼침
+
+```javascript
+const arr = [1, 2, 3, 4, 5];
+
+console.log(
+  arr.flatMap(i => [i * 10, i * 100, i * 1000])
+);
+
+//[10, 100, 1000, 20, 200, 2000, 30, 300, 3000, 40, 400, 4000, 50, 500, 5000]
+```
+
+
+
+//맨 마지막 코드는 아래와 같이 적어도 된다.
+
+```javascript
+const word = '하나 둘 셋 넷 다섯 여섯 일곱 여덟 아홉 열';
+
+console.log(
+  word
+  .split(' ')
+  .flatMap(i => i.split(''))
+);
+//['하', '나', '둘', '셋', '넷', '다', '섯', '여', '섯', '일', '곱', '여', '덟', '아', '홉', '열']
+
+//아래의 코드로 작성해도 된다.
+console.log(word.replaceAll(' ','').split(''))
+```
+
+
+
+### 배열의 스프레드와 디스트럭쳐링
+
+스프레드
+
+* 배열 내부의 요소들을, 대괄호를 제거하면서 다른 배열 속에 통째로 넣을 때 사용
+* 함수를 정의할 때, 인자의 갯수가 몇 개를 받을지 불분명할 때에도 스프레드 문법을 활용한다.
+
+```javascript
+const arr1 = ['B', 'C'];
+const arr2 = ['D'];
+const arr3 = ['E'];
+
+const arr4 = ['A', ...arr1, ...arr2, ...arr3, 'F']
+
+console.log(arr4);
+//['A', 'B', 'C', 'D', 'E', 'F']
+```
+
+```javascript
+const arr1 = [1, 2, 3, 4, 5];
+console.log(arr1);
+//[1, 2, 3, 4, 5]
+
+console.log(...arr1);
+//1 2 3 4 5
+// console.log(1, 2, 3, 4, 5); 과 결과가 같다.
+
+//함수의 인자로서 스프레드를 활용할 수 있다.
+console.log(
+  Math.max(...arr1),
+  Math.min(...arr1)
+);
+
+//5 1
+```
+
+스프레드 활용
+
+```javascript
+function classIntro (classNo, teacher, ...children) {
+  return `${classNo}반의 선생님은 ${teacher}, `
+    + `학생들은 ${children.join(', ')}입니다.`
+}
+
+const classNo = 3;
+const teacher = '김민지';
+const students = ['영희', '철수', '보라', '돌준', '달숙'];
+
+console.log(
+  classIntro(classNo, teacher, ...students)
+);
+
+//3반의 선생님은 김민지, 학생들은 영희, 철수, 보라, 돌준, 달숙입니다.
+```
+
+splice() 메서드와 스프레드를 활용해서, 아래와 같이 arr 배열에서 연속된 특정 요소들을 다른 요소들로 한꺼번에 대체할 수 있다.
+
+```javascript
+const arr = [1, 2, 3, 4, 5, 6, 7];
+const toAdd = ['둘', '셋', '넷'];
+
+arr.splice(1, 3, ...toAdd);
+
+console.log(arr);
+//[1, '둘', '셋', '넷', 5, 6, 7]
+```
+
+concat() 메서드를 활용할 때, 스프레드를 활용하면 가독성이 보다 더 높아진다.
+
+```javascript
+const arr1 = [1, 2, 3];
+const arr2 = [4, 5, 6];
+
+const arr3 = arr1.concat(arr2);
+const arr4 = [...arr1, ...arr2];
+
+//같은 결과를 나타낸다.
+console.log(arr3, arr4);
+//[1, 2, 3, 4, 5, 6]
+//[1, 2, 3, 4, 5, 6]
+```
+
+...arr 은 얕은 복사만 가능하다.
+
+그리고, 스프레드는 push와 unshift 대신 사용할 수 있으며, 가독성 면에서 보다 더 우수하다.
+
+```javascript
+let arr = [1, 2, 3];
+
+arr = [...arr, 4];
+console.log(arr);
+//[1, 2, 3, 4]
+
+arr = [0, ...arr];
+console.log(arr);
+//[0, 1, 2, 3, 4]
+```
+
+
+
+원본배열을 "유지"한 채, 일정부분만 연결하여 복사하는 메서드는 slice() 활용 (** splice()는 원본 배열을 변경시킴)
+
+```javascript
+const orgArr = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+// 4 ~ 6을 제외한 새 배열 만들기
+
+// 💡 slice는 원본을 변경하지 않음
+const arr1 = [
+  ...orgArr.slice(0, 3),
+  ...orgArr.slice(6, 9)
+];
+console.log(arr1);
+
+// [1, 2, 3, 7, 8, 9]
+```
+
+
+
+디스트럭쳐링
+
+```javascript
+const arr = [1, 2, 3];
+
+const x = arr[0];
+const y = arr[1];
+const z = arr[2];
+
+console.log(x, y, z);
+// 1 2 3
+```
+
+아래처럼, x y z에는 순서대로 arr의 요소가 할당된다.
+
+```javascript
+const arr = [1, 2, 3];
+const [x, y, z] = arr;
+
+console.log(x, y, z);
+//1 2 3
+```
+
+```javascript
+const arr = [1, 2, 3];
+const [x, y] = arr;
+
+console.log(x, y);
+//1 2
+```
+
+할당되지 않는 경우를 대비해서, 기본값을 미리 할당을 할 수 있다
+
+=> 기본값이 주어진 상태에서 할당을 하면, 할당값이 우선시 된다.
+
+```javascript
+const arr = [1, 2, 3];
+
+const [a, b, c, d = 4, e = 5] = arr;
+console.log(a, b, c, d, e);
+
+//1 2 3 4 5
+
+// 기본값보다 할당값이 우선
+const [f, g, h = 4] = arr;
+console.log(f, g, h);
+//1 2 3
+```
+
+아래처럼, 스프레드를 활용이 가능하며, 이 떄 y는 배열이 된다.
+
+```javascript
+const arr = [1, 2, 3, 4, 5];
+const [x, ...y] = arr;
+
+console.log(x, y);
+//1 [2,3,4,5]
+```
+
+디스트럭쳐링 활용
+
+=> 스프레드를 활용해서, 원본을 변화시키지 않고 점수 순서대로 정렬해서 1~3등을 출력
+
+```javascript
+const players = [
+  { name: '순이', score: 91 },
+  { name: '정환', score: 65 },
+  { name: '윤수', score: 72 },
+  { name: '철웅', score: 88 },
+  { name: '지우', score: 98 },
+  { name: '세아', score: 40 }
+];
+
+// 배열 중 첫 3개만 가져옴
+function logTop3 ([first, second, third]) {
+  console.log(
+    `1등은 ${first}!! 2등과 3등은 ${second}, ${third}입니다.`
+  );
+}
+
+logTop3(
+  [...players] // 💡 원본의 얕은 복사본을 정렬
+  .sort((a, b) => b.score - a.score)
+  .map(({name}) => name)
+);
+
+//1등은 지우!! 2등과 3등은 순이, 철웅입니다.
+```
+
+아래와 같이 값을 바꾸는 용도로도 사용이 가능
+
+```javascript
+let a = 1;
+let b = 2;
+
+// 서로 값을 바꾸기
+[a, b] = [b, a];
+
+console.log(a, b);
+//2 1
+```
+
+
+
+** 스프레드를 활용하는 곳은, sort()를 활용해서 생기는 문제점인, "원본 배열의 변경"을 예방하기 위해서이다.
+
+=> 얕은 복사를 활용한다.

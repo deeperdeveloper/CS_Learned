@@ -5282,3 +5282,938 @@ console.log(a, b);
 ** 스프레드를 활용하는 곳은, sort()를 활용해서 생기는 문제점인, "원본 배열의 변경"을 예방하기 위해서이다.
 
 => 얕은 복사를 활용한다.
+
+
+
+## Section 8. 객체 깊게 다루기
+
+### Lesson 1. Object
+
+Object 클래스
+
+
+
+Object 생성자 함수의 인자로서, 특정 타입의 값을 주게 되면, 해당 값에 적합한 래핑함수가 자동으로 적용되어서 등장한다
+
+```javascript
+console.log(
+  new Object(1),
+  new Object('ABC'),
+  new Object(true),
+  new Object([1, 2, 3])
+);
+
+//Number {1} 
+//String {'ABC'}
+//Boolean {true}
+//[1, 2, 3]
+```
+
+
+
+
+
+특정 객체에서 프로퍼티만 따서 또 다른 객체에 복사하는 것이 가능하다
+
+* 스프레드를 활용하거나 정적 메서드인 assign 메서드를 활용해서 이루어진다.
+
+  => 얕은 복사이기 때문에, 복사한 객체의 프로퍼티가 값이 아닌 객체라면, 복사되기 이전의 객체의 해당 프로퍼티와 공유한다.
+
+  ```javascript
+  //스프레드를 활용한 예
+  const intro1 = {
+    name: '홍길동'
+  };
+  const intro2 = { ...intro1 };
+  
+  console.log(intro1, intro2);
+  
+  // {name: '홍길동'} {name: '홍길동'}
+  ```
+
+  ```javascript
+  // Object.assign() 메서드 활용
+  
+  const personal = {
+    age: 25,
+    married: false
+  };
+  const career = {
+    job: '개발자',
+    position: '팀장'
+  }
+  
+  Object.assign(intro1, personal);
+  console.log(intro1);
+  
+  //{name: '홍길동', age: 25, married: false}
+  
+  // 둘 이상의 원본에서 가져올 수도 있음
+  Object.assign(intro2, personal, career);
+  console.log(intro2);
+  
+  //{name: '홍길동', age: 25, married: false, job: '개발자', position: '팀장'}
+  ```
+
+  ```javascript
+  //얕은 수준에서의 복사가 이루어짐
+  const obj1 = new Object();
+  const obj2 = { x: 1, y: 2 };
+  const obj3 = { y: 3 };
+  const obj4 = { z: { a: 1 }}
+  
+  Object.assign(obj1, obj2, obj3, obj4);
+  
+  console.log(obj1);
+  //{x: 1, y: 3, z: {a: 1}}
+  
+  obj2.x = 0;
+  obj4.z.a = 2;
+  
+  console.log(obj1);
+  //{x: 1, y: 3, z: {a: 2}}   //obj1의 key z에 대한 객체는, obj2의 key z에 대한 객체와 공유한다.
+  ```
+
+  
+
+* 특정 객체의 프로퍼티 중, KEY만 뽑을 수도 있고, value만 뽑을수도 있으며, 둘 다 뽑을 수도 있다
+
+  => 셋 다 모두 반환 결과는 배열이 된다.
+
+  ```javascript
+  const obj = {
+    x: 1,
+    y: 2,
+    z: 3
+  };
+  
+  console.log(
+    Object.keys(obj),
+  );
+  console.log(
+    Object.values(obj),
+  );
+  console.log(
+    Object.entries(obj),
+  );
+  
+  // ['x', 'y', 'z']
+  // [1, 2, 3]
+  // [['x', 1], ['y', 2], ['z', 3]] 
+  ```
+
+* 객체의 프로퍼티를 추가/삭제/수정 금지할 수 있다. (얕은 수준)
+
+  * 추가만 금지할 수 있고, 추가/삭제까지 금지할 수 있으며, 추가/삭제/수정까지 금지할 수 있다.
+
+  * 셋 다 모두 정적 메서드로서 구현할 수 있다.
+
+    * Object.preventExtensions(obj);
+    * Object.seal(obj);
+    * Object.isFrozen(obj);
+
+    ```javascript
+    //프로퍼티 추가만 금지
+    const obj = { x: 1, y: 2 };
+    
+    console.log(Object.isExtensible(obj)); //true
+    
+    Object.preventExtensions(obj);
+    
+    console.log(Object.isExtensible(obj)); //false
+    
+    obj.x++; // 프로퍼티 수정 가능
+    delete obj.y // 프로퍼티 삭제 가능
+    obj.z = 3; // 💡 프로퍼티 추가 금지
+    
+    console.log(obj); //{x: 2}
+    
+    
+    //프로퍼티 추가, 삭제 금지
+    //프로퍼티 어트리뷰트 configurable 과 관련이 있다. (뒤에서 언급)
+    const obj = { x: 1, y: 2 };
+    
+    console.log(Object.isSealed(obj)); //false
+    
+    Object.seal(obj);
+    
+    console.log(Object.isSealed(obj)); //true
+    
+    obj.x++; // 프로퍼티 수정 가능
+    delete obj.y // 💡 프로퍼티 삭제 금지
+    obj.z = 3; // 💡 프로퍼티 추가 금지
+    
+    console.log(obj); // {x: 2, y: 2}
+    
+    
+    //프로퍼티 추가, 삭제, 수정 금지
+    const obj = { x: 1, y: 2 };
+    
+    console.log(Object.isFrozen(obj)); //false
+    
+    Object.freeze(obj);
+    
+    console.log(Object.isFrozen(obj)); //true
+    
+    obj.x++; // 💡 프로퍼티 수정 불가
+    delete obj.y // 💡 프로퍼티 삭제 금지
+    obj.z = 3; // 💡 프로퍼티 추가 금지
+    
+    console.log(obj); //{x: 1, y: 2}
+    
+    
+    //얕게만 적용
+    const obj = {
+      x: 1,
+      y: { a: 1 }
+    };
+    
+    Object.freeze(obj);
+    
+    obj.x++;
+    obj.y.a++;
+    
+    console.log(obj); //{x: 1, y: {a: 2}}
+    ```
+
+    
+
+  * 셋 다 모두 얕은 수준에서 실행되기 때문에, 깊은 수준까지 실행하기 위해서는 별도의 메서드를 사용해야 한다.
+
+
+
+### 프로퍼티 어트리뷰트
+
+프로퍼티에는 데이터 프로퍼티와 접근자 프로퍼티가 있다.
+
+```javascript
+const person = {
+
+  // ⭐️ 1. 데이터 프로퍼티들
+  fullName: '홍길동',
+  ageInNumber: 25,
+
+  // ⭐️ 2. 접근자 프로퍼티들
+  get name () {
+    return this.fullName
+    .split('')
+    .map((letter, idx) => idx === 0 ? letter : '*')
+    .join('');
+  },
+  get age () { return this.ageInNumber + '세'; },
+  set age (age) {
+    this.ageInNumber = Number(age);
+  }
+}
+
+console.log(
+  person.name, person.age
+);
+
+// 홍**, 25세
+```
+
+객체의 프로퍼티 어트리뷰트는, 별도의 디스크립터 객체에 "프로퍼티" 로서 저장된다.
+
+* 객체가 생성될 때, 프로퍼티 어트리뷰트는 엔진에 의해 자동으로 정의된다.
+
+```javascript
+// 특정 프로퍼티를 지정하여 반환
+console.log('1.',
+  Object.getOwnPropertyDescriptor(person, 'fullName')
+);
+console.log('2.',
+  Object.getOwnPropertyDescriptor(person, 'ageInNumber')
+);
+console.log('3.', // set: undefined
+  Object.getOwnPropertyDescriptor(person, 'name')
+);
+console.log('4.', // get, set 모두 있음
+  Object.getOwnPropertyDescriptor(person, 'age')
+);
+
+//1. {value: '홍길동', writable: true, enumerable: true, configurable: true
+//2. {value: 25, writable: true, enumerable: true, configurable: true}
+//3. {set: undefined, enumerable: true, configurable: true, get: ƒ}
+//4. {enumerable: true, configurable: true, get: ƒ, set: ƒ}
+
+// 모든 프로퍼티의 어트리뷰트 객체로 묶어 반환
+console.log(
+  Object.getOwnPropertyDescriptors(person)
+);
+//{fullName: {…}, ageInNumber: {…}, name: {…}, age: {…}}
+```
+
+객체의 프로퍼티와 해당 프로퍼티의 어트리뷰트는, defineProperty() 라는 정적 메서드를 통해 설정할 수 있다
+
+* ** 어트리뷰트는, 직접 객체에 접근하여 수정하는 것은 가능하지 않다.(writable 어트리뷰트에 직접 접근하여 true를 false로 바꾸어보는 코드를 작성해보았으나, 실행되지 않음)
+
+  ```javascript
+  const person = {};
+  
+  // 한 프로퍼티씩 각각 설정
+  Object.defineProperty(person, 'fullName', {
+    value: '홍길동',
+    writable: true
+    // 💡 누락한 어트리뷰트는 기본값으로 자동생성
+  });
+  
+  Object.defineProperty(person, 'name', {
+    get () {
+      return this.fullName
+      .split('')
+      .map((letter, idx) => idx === 0 ? letter : '*')
+      .join('');
+    }
+  });
+  
+  console.log(person, person.name);
+  console.log( // ⚠️ 누락된 어트리뷰트들 확인해볼 것
+    Object.getOwnPropertyDescriptors(person)
+  );
+  
+  // {fullName: '홍길동'} 홍**
+  // {fullName: {…}, name: {…}}
+  
+  //아래처럼 직접 어트리뷰트에 접근하여 수정을 시도하는 경우는, 실행되지 않는다
+  Object.getOwnPropertyDescriptors(person).fullName.writable = false
+  console.log(Object.getOwnPropertyDescriptors(person).fullName.writable)
+  
+  //true
+  ```
+
+  ```javascript
+  // 여러 프로퍼티를 객체 형식으로 한꺼번에 설정
+  Object.defineProperties(person, {
+    ageInNumber: { 
+      value: 25,
+      writable: true
+    },
+    age: {
+      get () { return this.ageInNumber + '세'; },
+      set (age) {
+        this.ageInNumber = Number(age);
+      }
+    }
+  });
+  
+  person.age = 30;
+  
+  console.log(person, person.age);
+  console.log(
+    Object.getOwnPropertyDescriptors(person)
+  );
+  
+  //{fullName: '홍길동', ageInNumber: 30} '30세'
+  //{fullName: {…}, name: {…}, ageInNumber: {…}, age: {…}}
+  ```
+
+
+
+객체의 프로퍼티의 어트리뷰트를 조정하여, 아래의 과정을 시행할 수 있다
+
+* 프로퍼티의 값을 조정
+
+* 프로퍼티의 키값에 대해서, (특정 순환 메서드 사용 시) 순환대상에서 제외시키는 것
+
+  ```javascript
+  const person = {
+    fullName: '홍길동',
+    ageInNumber: 25,
+  };
+  
+  // 💡 value를 전우치로 바꾸면
+  Object.defineProperty(person, 'fullName', {
+    value: '전우치'
+  });
+  
+  console.log(person);
+  //{fullName: '전우치', ageInNumber: 25}
+  
+  console.log(
+    Object.keys(person)
+  );
+  //['fullName', 'ageInNumber']
+  
+  
+  // 💡 enumerable을 false로 바꾸면, 해당 어트리뷰트의 프로퍼티는 순환대상에서 제외된다.
+  Object.defineProperty(person, 'fullName', {
+    enumerable: false
+  });
+  
+  console.log(
+    Object.keys(person)
+  );
+  //['ageInNumber']
+  
+  console.log(
+    // ⭐️ Object의 또 다른 정적 메서드
+    // ⭐️ enemerable이 false인 프로퍼티도 반환
+    Object.getOwnPropertyNames(person)
+  );
+  //['fullName', 'ageInNumber']
+  
+  // 💡 seal: configurable을 false로 바꿈
+  Object.seal(person);
+  
+  console.log(
+    Object.getOwnPropertyDescriptors(person)
+  );
+  
+  // 💡 freeze: configurable과 writable을 false로 바꿈
+  // seal, configurable 보다 훨씬 엄격한 수준의 접근 제어라고 볼 수 있다.
+  Object.freeze(person);
+  
+  console.log(
+    Object.getOwnPropertyDescriptors(person)
+  );
+  ```
+
+* 객체 동결
+
+  * 새로운 속성을 추가, 기존 속성의 수정/제거가 불가능
+  * 속성의 어트리뷰트가 변경되는 것을 모두 방지
+  * 객체의 프로토타입이 변경되는 것도 방지
+    * 의문사항) 이것은 생성자 함수를 통해서 접근했을 떄에도 방지되는지는 확인이 필요함.
+  * 주의 사항 : freeze는 얕은 수준의 동결이기 때문에, 깊은 동결을 위해서는 객체의 프로퍼티가 객체가 아닌 primitive type이 나올때까지 재귀적으로 동결을 진행해야 한다.
+
+  ```javascript
+  function getDeepFrozen(obj) {
+    console.log(obj);
+  
+    const result = {};
+    const propNames = Object.getOwnPropertyNames(obj);
+  
+    for (const name of propNames) {
+      const value = obj[name];
+  
+      result[name] = 
+        (value && typeof value === 'object') ?
+        getDeepFrozen(value) : value;
+    }
+    return Object.freeze(result);
+  }
+  
+  //참고 : value && 가 필수적인 이유
+  //	=> null이나 undefined인 경우, 위 코드는 무한반복되기 때문에 이를 방지하기 위함.
+  ```
+
+  ```javascript
+  //얕은 동결 실행
+  
+  let myObj = {
+    a: 1,
+    b: {
+      c: 2,
+      d: {
+        e: 3,
+        f: {
+          g: 4
+        }
+      }
+    }
+  }
+  
+  // 여러 번 실행해 볼 것
+  myObj.a++;
+  myObj.b.c++;
+  myObj.b.d.e++;
+  myObj.b.d.f.g++;
+  
+  console.log(myObj);
+  //{a: 2, b: {c: 3, d: {e: 4, f: {g: 5}}}}
+  
+  
+  //깊은 동결 실행
+  myObj = getDeepFrozen(myObj);
+  
+  myObj.a++;
+  myObj.b.c++;
+  myObj.b.d.e++;
+  myObj.b.d.f.g++;
+  
+  console.log(myObj);
+  //myObj의 객체의 프로퍼티는 변한 점이 1개도 없다.
+  ```
+
+  ** 참고로, 깊은 동결의 경우 아래의 코드는 그렇게 좋지 않은 코드이다.
+
+  (기능은 같다.)
+
+  => object인자를 바꾸기 때문에, object를 재활용할 수 없다.
+
+  => 함수에서는, 인자를 바꾸지 않고 일정한 연산에 의해서 어떠한 결과물을 도출해내는 것이 좋은 함수이다.
+
+  ```javascript
+  // mdn문서 코드
+  
+  function deepFreeze(object) {
+    // 객체에 정의된 속성명을 추출
+    var propNames = Object.getOwnPropertyNames(object);
+  
+    // 스스로를 동결하기 전에 속성을 동결
+  
+    for (let name of propNames) {
+      let value = object[name];
+  
+      object[name] =
+        value && typeof value === "object" ? deepFreeze(value) : value;
+    }
+  
+    return Object.freeze(object);
+  }
+  
+  var obj2 = {
+    internal: {
+      a: null,
+    },
+  };
+  
+  deepFreeze(obj2);
+  
+  obj2.internal.a = "anotherValue"; // 비엄격 모드에서 조용하게 실패
+  obj2.internal.a; // null
+  ```
+
+  
+
+  참고자료 : [Object.freeze() - JavaScript | MDN (mozilla.org)](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze)
+
+
+
+
+
+참고
+
+* 프로포티 생성 시, 자바 스크립트 엔진은 내부적으로 프로퍼티 어트리뷰트를 기본값으로 정의
+  * 내부슬롯 이라고도 부른다
+  * 개발자가 직접 접근할 수는 없으며, 간접적으로 확인할 수 있다. 
+
+https://velog.io/@dbstjrwnekd/%ED%94%84%EB%A1%9C%ED%8D%BC%ED%8B%B0-%EC%96%B4%ED%8A%B8%EB%A6%AC%EB%B7%B0%ED%8A%B8Property-Attribute
+
+* 데이터 프로퍼티와 접근자 프로퍼티
+
+  * 데이터 프로퍼티는 key-value로 이루어져 있다. 즉, 값을 가진다
+
+    * 해당하는 어트리뷰트의 예시는 아래와 같다
+
+      ```javascript
+      {value: '홍길동', writable: true, enumerable: true, configurable: true}
+      ```
+
+  * 접근자 프로퍼티는, 값을 가지지 않는다
+
+    * 데이터 프로퍼티의 값을 읽거나 변경하는데 사용된다
+
+    * 해당하는 어트리뷰트는 4가지이며 아래와 같다
+
+      ```javascript
+      {set: undefined, enumerable: true, configurable: true, get: ƒ}
+      ```
+
+  * 객체가 생성될 때, 자바스크립트는 객체의 프로퍼티를 내부적으로 어트리뷰트를 통해서 관리를 한다
+
+  * 출처 : https://velog.io/@seeh_h/%ED%94%84%EB%A1%9C%ED%8D%BC%ED%8B%B0-%EC%96%B4%ED%8A%B8%EB%A6%AC%EB%B7%B0%ED%8A%B8feat.-%EB%82%B4%EB%B6%80-%EC%8A%AC%EB%A1%AF%EA%B3%BC-%EB%82%B4%EB%B6%80-%EB%A9%94%EC%86%8C%EB%93%9C
+
+
+
+### JSON(JavaScript Object Notation)
+
+일단, 객체를 문자열로 직렬화하는 예제를 살펴보자
+
+=> 정적 메서드인 JSON.stringfy()를 활용한다.
+
+```javascript
+const person = {
+  name: '김달순',
+  age: 23,
+  languages: ['Korean', 'English', 'French'],
+  education: {
+    school: '한국대',
+    major: ['컴퓨터공학', '전자공학'],
+    graduated: true,
+  }
+};
+
+const personStr = JSON.stringify(person);
+
+console.log(typeof personStr);
+console.log(personStr);
+
+//string
+//{"name":"김달순","age":23,"languages":["Korean","English","French"],"education":{"school":"한국대","major":["컴퓨터공학","전자공학"],"graduated":true}}
+```
+
+* 아래에서, Infinity나 NaN이 null로 직렬화가 되는 이유는 아래와 같을 것이다. (내 생각)
+  * null은 의도적으로 빈 값을 할당하는 상태이고, Infinity나 NaN 역시 어떠한 값이기 때문에 undefined보다 null이 적당하다고 판단될 것이다.
+* 직렬화 시, 아래의 것들은 직렬화가 되지 않는다
+  * 함수, Symbol, BigInt
+    * 프로퍼티에서 key 나 value로서 위의 값이 존재한다면, 통째로 직렬화가 되지 않는다.
+  * Date객체는 직렬화가 되기는 하지만, 역직렬화가 가능하지 않다.
+
+```javascript
+[
+  JSON.stringify(1),
+  JSON.stringify(Infinity), // ⚠️
+  JSON.stringify(NaN), // ⚠️
+  JSON.stringify('가나다'),
+  JSON.stringify(true),
+  JSON.stringify(null),
+  JSON.stringify(undefined),
+  JSON.stringify([1, 2, 3]),
+  JSON.stringify({x: 1, y: 2}),
+  JSON.stringify(new Date()), // ⚠️
+]
+.forEach(i => console.log(i));
+
+//1
+//null
+//null
+//'가나다'
+//true
+//null
+//undefined
+//[1,2,3]
+//{"x":1, "y":2}
+//"2023-10-19T22:25:16.958Z"
+
+// 이후 배울 Symbol - 직렬화되지 않음
+console.log( JSON.stringify(Symbol('hello')) ); // ⚠️
+//undefined
+```
+
+* 아래는 값이 함수인 프로퍼티인 경우에는, 아예 직렬화 과정에서 생략됨을 확인할 수 있다
+
+  * 함수 자체를 직렬화하려고 하면, undefined가 반환됨을 알 수 있다
+
+  ```javascript
+  const obj = {
+    x: 1,
+    y: 2,
+    z: function () { return this.x + this.y }
+  }
+  console.log(obj.z())
+  
+  const objStr = JSON.stringify(obj);
+  console.log(objStr);
+  
+  //3
+  //{"x":1,"y":2}
+  
+  const func1 = (a, b) => a + b;
+  function func2 () { console.log('HELLO'); }
+  
+  const func1Str = JSON.stringify(func1);
+  const func2Str = JSON.stringify(func2);
+  
+  console.log(func1Str);
+  console.log(func2Str);
+  //undefined
+  //undefined
+  ```
+
+  
+
+JSON.stringify() 활용 시, 2번째 인자를 통해서 아래의 사항을 시행할 수 있다
+
+=> 단순히, 객체 그대로를 직렬화하는 것이 아니라, 객체의 정보를 조작해서 변환할 수 있다
+
+=> 이 때, 2번째 인자는 함수가 들어가며, 맨 첫번째 (key,value) 는 ('', 객체 그 자체) 가 무조건 들어간다는 것이 특징이다.
+
+=> 2번째 인자로 배열이 들어갈 수도 있으며, 이 때 배열의 요소는 key 값이다.
+
+```javascript
+const obj = {
+  a: 1,
+  b: '2',
+  c: 3,
+  d: true,
+  e: false
+}
+
+// 1. key와 value 매개변수
+const objStr1 = JSON.stringify(obj, (key, value) => {
+  if (key && key < 'a' || key > 'c') {
+    // 해당 프로퍼티 생략
+    return undefined;
+    // ⚠️ 조건에 key && 을 붙이지 않으면 항상 undefined가 반환됨
+    // key가 공백('')일 때(value는 객체 자체) undefined를 반환하므로...
+    // key와 value를 로그로 출력해보며 확인해 볼 것
+  }
+  if (typeof value === 'number') {
+    return value * 10;
+  }
+  return value;
+});
+console.log(objStr1);
+//{"a":10,"b":"2","c":30}
+
+// 2. 반환한 key의 배열 매개변수
+const objStr2 = JSON.stringify(obj, ['b', 'c', 'd']);
+console.log(objStr2);
+//{"b":"2","c":3,"d":true}
+```
+
+* JSON.stringify()의 3번째 인자로 indent 정도를 넣을 수 있다
+
+  * 가독성 있는 JSON 객체 결과물을 확인할 수 있다.
+
+  ```javascript
+  const obj = {
+    a: 1,
+    b: {
+      c: 2,
+      d: {
+        e: 3
+      }
+    }
+  };
+  
+  [
+    JSON.stringify(obj, null),
+    JSON.stringify(obj, null, 1),
+    JSON.stringify(obj, null, 2),
+    JSON.stringify(obj, null, '\t')
+  ]
+  .forEach(i => console.log(i));
+  //{"a":1,"b":{"c":2,"d":{"e":3}}}
+  
+  {
+   "a": 1,
+   "b": {
+    "c": 2,
+    "d": {
+     "e": 3
+    }
+   }
+  }
+  
+  {
+    "a": 1,
+    "b": {
+      "c": 2,
+      "d": {
+        "e": 3
+      }
+    }
+  }
+  
+  {
+  	"a": 1,
+  	"b": {
+  		"c": 2,
+  		"d": {
+  			"e": 3
+  		}
+  	}
+  }
+  ```
+
+* 이외에도, 객체에 toJSON 프로퍼티가 있고, 그 값이 "함수"인 경우에는 해당 객체가 직렬화 되는 것이 아니라, 함수의 결과물이 출력된다
+
+  ```javascript
+  const obj = {
+    x: 1,
+    y: 2,
+    toJSON: function () {
+      return '훗, 나를 직렬화해보겠다는 건가';
+    }
+  }
+  
+  console.log(
+    JSON.stringify(obj)
+  );
+  //"훗, 나를 직렬화해보겠다는 건가"
+  
+  const obj = {
+    x: 1,
+    y: 2,
+    toJSON: 4444
+  }
+  
+  //toJSON 프로퍼티의 키를 "문자열"로 취급하며, 객체 통째로 직렬화가 된다.
+  console.log(
+    JSON.stringify(obj)
+  );
+  //{"x":1,"y":2,"toJSON":4444}
+  
+  
+  //Date 객체의 직렬화 결과물이 문자로 나오는 것도, Date 객체가 내부적으로 toJSON 프로퍼티를 가지고 있기 때문이다. (그리고 해당 프로퍼티의 값은 함수!)
+  console.log(JSON.stringify(new Date()));
+  //"2023-10-20T07:04:02.591Z"
+  new Date().toJSON;  //Date 생성자 함수를 통해 만든 날짜 객체에 toJSON 프로퍼티가 있음을 확인할 수 있다.
+  ```
+
+
+
+역직렬화
+
+=> JSON.parse() 함수를 통해 이루어지며, 2번째 인자인 함수를 통해서, 역직렬화시 객체의 프로퍼티의 값을 조작하여 역직렬화할 수 있는 기능이다.
+
+=> "문자열"로 표현된 자바스크립트 데이터를, 해석하여 자바스크립트 자료형으로 변환시킨다.
+
+```javascript
+//따옴표와 내부따옴표를 통해서, string인지 다른 타입의 변수인지를 구분한다.
+[
+  JSON.parse('1'),
+  JSON.parse('"가나다"'), // ⚠️ 안쪽에 따옴표 포함해야 함
+  JSON.parse('true'),
+  JSON.parse('null'),
+  JSON.parse('[1, 2, 3]'),
+  JSON.parse('{"x": 1, "y": 2}') // ⚠️ key도 따옴표로 감싸야 함
+]
+.forEach(i => console.log(i));
+
+//1
+//가나다
+//true
+//null
+//[1,2,3]
+//{x: 1, y: 2}
+```
+
+```javascript
+//parse()는 깊은 곳까지 다 수행한다.
+//(내 생각) 프로퍼티의 value가 primitive type이 아닌 경우, 해당 value에 대해 재귀적으로 탐색한다.
+
+const objStr = '{"a":1,"b":"ABC","c":true,"d":[1,2,3]}';
+
+const obj = JSON.parse(objStr, (key, value) => {
+  console.log(key, value);
+  if (key === 'c') { 
+    // 해당 프로퍼티 생략
+    return undefined;
+  }
+  if (typeof value === 'number') {
+    return value * 100;
+  }
+  return value;
+});
+//a 1
+//b ABC
+//c true
+//0 1
+//1 2
+//2 3
+//d [100, 200, 300]
+// {a: 100, b: 'ABC', d: [100, 200, 300]}
+
+
+//parse()의 맨 마지막 인자로는, ('', 객체 그 자체)이며, 해당 객체는 조작 과정을 거친 후의 객체 obj이며, 해당 obj가 결국에 출력된다.
+console.log(obj); // ⚠️ 내부까지 적용(배열 확인해 볼 것)
+// {a: 100, b: 'ABC', d: [100, 200, 300]}
+```
+
+
+
+위의 parse()의 특징을 활용해서, (제한적으로) 객체의 깊은 복사가 가능하다
+
+=> (제한적으로) 가능하다고 하는 이유는, "함수" 와 "Date객체" 와 "Symbol" 과 "BigInt" 는 깊은 복사가 가능하지 않기 때문이다.
+
+```javascript
+const obj1 = {
+  a: 1,
+  b: {
+    c: 2,
+    d: {
+      e: 3,
+      f: {
+        g: 4
+      }
+    }
+  }
+}
+
+//역직렬화를 통해 깊은 복사 시도
+const obj2 = JSON.parse(JSON.stringify(obj1));
+
+console.log(obj1);
+console.log(obj2);
+
+console.log(obj1 === obj2); //false
+```
+
+```javascript
+const obj1 = {
+  a: 1,
+  b: 2,
+  c: function () { return this.a + this.b },
+  d: new Date(),
+  e: Symbol('안녕'),
+  // g: 1n // ⚠️ 오류 발생
+}
+
+const obj2 = JSON.parse(JSON.stringify(obj1));
+
+console.log(obj1);
+console.log(obj2);
+
+//{a: 1, b: 2, d: Fri Oct 20 2023 09:47:51 GMT+0900 (한국 표준시), e: Symbol(안녕), c: ƒ}
+//{a: 1, b: 2, d: '2023-10-20T00:47:51.184Z'}
+```
+
+
+
+
+
+참고
+
+* 어떠한 복잡한 구조의 자료를 보내는 형식에는 XML, JSON, YAML 이 있다.
+
+  * XML
+
+    * 태그를 활용하여 구조화된 정보를 나타낸다
+    * 엔터와 탭을 제외하고 한 줄로 작성해도 컴퓨터는 정상적으로 인식한다.
+    * <u>어떠한 문법적인 오류가 발생할 때, 오류가 발생하는 범위는 해당 태그 내이다.</u>
+      * 해당 태그 바깥에서는, 정상적으로 작동한다.
+
+    * xsd라는 문서를 통해서, xml의 요소 중 어떤 "필수적인 요소" 가 들어갔는지 명시한다.
+      * XSD/XML Schema Generator를 통해 자동으로 생성이 가능하다.
+    * 태그의 여닫는 코드가 필수적으로 들어가므로, 코드가 많아지며 가독성이 떨어진다는 단점.
+
+  * JSON
+    * {} 를 활용하여 구조화된 정보를 나타낸다.
+    * XML보다 간결하다.
+    * (이 부분은 추가적인 확인 요망) 어떠한 문법적인 오류가 발생할 때, 문서 전체에 오류가 생긴다
+      * 이는 {}로 열고 닫는 JSON의 특성상, 어디가 
+      * 내 생각) 
+    * 필수적인 요소가 들어갔는지 검증하려면, 자체적으로는 기능이 없다
+      * 별도의 프로그래밍을 통해 확인해야 한다.
+    * 결론
+      * 안전성이 요구되는 것보다, 가벼운 프로그래밍을 할 때 적절하다.
+
+  * YAML
+    * 사람의 가독성에 초점을 맞춘 문서
+      * 따라서, indenting을 사용해서 직관적으로 표현하며, xml과 Json과 달리, 한 줄로 표현(=Minifying)이 불가하다.
+
+
+
+* Symbol의 정의
+
+  * (나중에 배우니 간단하게만 정리하고 넘어감)
+
+  * primitive type 이며, 프로퍼티의 키를 고유하게 설정하여 프로퍼티 키의 충돌을 방지하는데 중점을 둔다
+
+    * 일반적으로, 프로퍼티의 키는 문자열이 대부분인 점에 빗대어 본다면, "위의 의도"가 더욱 명료해진다.
+
+    * Symbol은 생성자 함수가 될 수 없다
+
+      (즉, wrapper 객체 형성이 불가능하다. 오직 Symbol 함수를 호출해서 "고유한" Symbol을 생성하는 것이 가능하다)
+
+      * 여러 모듈에서 1개의 Symbol을 공유하고 싶다면, Symbol.for(k) 를 통해 Symbol을 만들면 된다
+
+        => 전역 심볼 레지스트리에, key 가 k이면서 value가 Symbol로서 저장이 되고, 이미 그러한 과정이 이루어진 상태라면, 해당 Symbol을 활용한다.
+
+  * 출처
+
+    * https://it-eldorado.tistory.com/149
+
+* null과 undefined의 차이
+
+  * 둘 다 primitive type으로 취급을 받음
+    * 그러나, console.log 상으로는, null은 object 타입이며 undefined는 undefined 타입으로 명시가 되어 있다.
+  * undefined는 전역 객체의 속성 값 중 하나
+    * 따라서, 변수를 선언하고 값을 할당하지 않을 떄, undefined가 자동으로 할당된다.
+  * null은, 전역 객체의 속성 값이 아니다. 어떠한 리터럴 값이다.
+    * 객체가 의도적으로 비어 있음을 표현할 떄 활용한다.
+  * 출처 : https://2ssue.github.io/common_questions_for_Web_Developer/docs/Javascript/13_undefined&null.html#undefined

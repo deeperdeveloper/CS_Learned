@@ -6508,6 +6508,8 @@ console.log(x.toString(2), x);
       //1 9007199254740992
       ```
 
+* (참고) 아마 BigInt는 부동소숫점 방식이 아니라, 다른 프로그래밍 방식으로 수를 표현하기에, 2^53-1 보다 더 큰 숫자를 표현하는 게 아닐까 생각한다. 
+
 
 
 ### Symbol
@@ -6673,13 +6675,30 @@ console.log(x.toString(2), x);
       obj[Symbol.for('hello')]
     );
     //SECRET STRING
-    
     ```
-
+  
+    심볼의 키를 반환하는 메서드를 활용할 때에는, "전역 심볼 레지스트리" 에 저장된 심볼에 한해서만 가능하다 (그렇지 않은 심볼은, 키를 반환받을 방법이 없다.)
+  
+    ```javascript
+    const symbol1 = Symbol.for('hello');
+    const symbol2 = Symbol.for('hello2');
+    const symbol3 = Symbol('not');
+    
+    console.log(Symbol.keyFor(symbol1));
+    console.log(Symbol.keyFor(symbol2));
+    console.log(Symbol.keyFor(symbol3));
+    
+    //hello
+    //hello2
+    //undefined
+    ```
+  
+    
+  
   * 전역 심볼 레지스트리 활용 예시
-
+  
     * 표준 빌트인 객체에, 개발자가 직접 만든 메서드를 넣고 싶은 경우에 활용이 가능하다.
-
+  
       => 추후에 해당 기능의 메서드가 개발이 되더라도, 개발자가 정의한 메서드 이름과  중복이 생기는 것을 확실하게 방지할 수 있다.
 
       ```javascript
@@ -6698,15 +6717,15 @@ console.log(x.toString(2), x);
       console.log([1, 2, 3, 4, 5, 6][v]());
       //3.5
       ```
-
+  
       * 아래의 경우는, "브라우저"에 한번에 입력하면 에러가 뜬다.
-
+  
         (`console.log([1,2,3,4,5,6][Symbol.for('average')]())` 이 부분을 따로 치면 에러가 발생하지 않는다.)
-
+  
         => 왜 그런지는 모르겠다.
-
+  
         => 또한, 리터럴 객체 대신, new Array(1,2,3,4,5,6) 으로 바꾼 후, 한 화면에 치면 에러가 발생하지 않는다. (왜 그런지는 아직 모르겠음)
-
+  
         ```javascript
         // 숫자 요소들의 평균을 구하는 메서드 추가
         Array.prototype[Symbol.for('average')] = function () {
@@ -6724,5 +6743,431 @@ console.log(x.toString(2), x);
         //Uncaught TypeError: Cannot read properties of undefined (reading 'Symbol(average)')
             at <anonymous>:13:19
         ```
+  
 
-        
+
+
+
+
+## 섹션10. 이터러블과 제너레이터
+
+### Set
+
+정의
+
+* 값들의 순서가 무의미하며, 동일한 값을 여러 번 포함할 수 없다.
+
+```javascript
+// Set 생성
+const set1 = new Set();
+
+// add 메서드 - 요소 추가
+set1.add(1);
+set1.add('A');
+set1.add(true);
+
+console.log(set1);
+
+// 이미 포함된 요소는 추가하지 않음
+set1.add(1);
+set1.add(true);
+
+console.log(set1);
+
+
+
+
+// 배열을 인자 넣으면 생성 + 초기화
+// 중복된 요소 제거
+const set2 = new Set([1, 1, 1, 'A', true]);
+
+console.log(set2);
+//Set(3) {1, 'A', true}
+
+// has 메서드 - 요소 포함여부 확인
+console.log(
+  set2.has(1),
+  set2.has('A'),
+  set2.has(4)
+);
+//true true false
+
+
+// delete 메서드 - 요소 제거 & 성공 여부 반환
+console.log(
+  set2.delete('A'),
+  set2.delete(true),
+  set2.delete(100)
+);
+//true true false
+
+console.log(set2);
+//Set(1) {1}
+
+// add 메서드는 결과 셋을 반환
+const set3 = set2.add(2);
+
+console.log(set3);
+
+// 💡 메서드 체이닝을 할 수 있다는 의미
+set2
+.add(3)
+.add(4)
+.add(5)
+
+// 참조형이므로 둘이 같은 Set을 가리킴
+console.log(set2, set3);
+
+
+// size 프로퍼티 - 요소의 개수
+console.log(
+  set2.size
+);
+
+
+// keys, values, entries 메서드 - 값 / 값 / [값, 값] 반환
+// key를 value와 같이 취급
+console.log(
+  set2.keys(),
+  set2.values(),
+  set2.entries()
+);
+
+//SetIterator {1, 2, 3, 4, 5} 
+//SetIterator {1, 2, 3, 4, 5} 
+//SetIterator {1 => 1, 2 => 2, 3 => 3, 4 => 4, 5 => 5} //key와 value가 같다.
+
+
+```
+
+참조형 데이터를 추가하는 경우는, 코드를 어떻게 작성하느냐에 따라 다른 데이터로 인식하기도 하고, 같은 데이터로 인식하기도 한다.
+
+```javascript
+const objSet1 = new Set()
+.add({ x: 1, y: 2 })
+.add({ x: 1, y: 2 })
+.add([1, 2, 3])
+.add([1, 2, 3]);
+
+// 각기 다른 것으로 인식 (참조하는 주소가 다르므로)
+console.log(objSet1);
+//Set(4) {{…}, {…}, Array(3), Array(3)}
+
+
+const obj = { x: 1, y: 2 };
+const arr = [1, 2, 3];
+
+const objSet2 = new Set()
+.add(obj)
+.add(obj)
+.add(arr)
+.add(arr);
+
+// 같은 것들로 인식
+console.log(objSet2)
+//Set(2) {{…}, Array(3)}
+```
+
+
+
+이터러블로서의 Set
+
+* Set은 Iterable한 객체이므로, for...of 문 사용이 가능하다.
+* 스프레드를 활용하여, 중복된 원소가 포함된 배열의 모든 원소를, Set으로 옮기는 것이 가능하다.
+
+```javascript
+const arr = ['A', 'B', 'C', 'D', 'E'];
+const set = new Set(arr);
+
+for (item of set) {
+  console.log(item);
+}
+//A
+//B
+//C
+//D
+//E
+
+const newArr = [...set];
+
+console.log(newArr);
+//(5) ['A', 'B', 'C', 'D', 'E']
+
+// 활용 - 중복을 제거한 배열 반환
+const arr1 = [1, 1, 1, 2, 2, 3, 4, 5];
+
+const arr2 = [...new Set(arr1)];
+
+console.log(arr2);
+//(5) [1, 2, 3, 4, 5]
+
+
+
+const [x, y] = set;
+console.log(x);
+console.log(y);
+//A
+//B
+
+
+const [a, b, ...rest] = set;
+
+console.log(a);
+console.log(b);
+console.log(rest);
+//A
+//B
+//['C', 'D', 'E']
+```
+
+forEach() 메서드 사용 가능
+
+```javascript
+const set = new Set(['A', 'B', 'C', 'D', 'E']);
+
+// ⚠️ 두 번째 인자가 인덱스가 아님!
+// 배열과 달리 순서 개념이 없으므로...
+// 형식을 맞추기 위한 인자일 뿐
+
+set.forEach(console.log);
+
+// 아래의 결과와 같음
+// set.forEach((item, idx, set) => {
+//   console.log(item, idx, set)
+// });
+
+
+//A A Set(5) {'A', 'B', 'C', 'D', 'E'}
+//B B Set(5) {'A', 'B', 'C', 'D', 'E'}
+//C C Set(5) {'A', 'B', 'C', 'D', 'E'}
+//D D Set(5) {'A', 'B', 'C', 'D', 'E'}
+//E E Set(5) {'A', 'B', 'C', 'D', 'E'}
+
+```
+
+
+
+### Map
+
+개요
+
+* 키와 쌍으로 이루어진 컬렉션
+
+
+
+map을 생성하는 데에는 아래의 2가지 방법이 존재한다.,
+
+* set() 함수로 key-value를 설정하는 경우
+* 배열로 생성
+
+```javascript
+// Map 생성
+const map1 = new Map();
+
+// set 메서드 - 키와 값의 쌍 추가
+map1.set('x', 1);
+map1.set(123, 'ABC');
+map1.set(true, { a: 1, b: 2 });
+
+console.log(map1);
+// Map(3) {'x' => 1, 123 => 'ABC', true => { a: 1, b: 2 }}
+
+
+// [[키 쌍]...] 배열로 생성 + 초기화
+const map2 = new Map([
+  ['x', 1],
+  [123, 'ABC'],
+  [true, { a: 1, b: 2 }],
+]);
+
+console.log(map2);
+// Map(3) {'x' => 1, 123 => 'ABC', true => { a: 1, b: 2 }}
+```
+
+그리고, map 객체는 key,value에 대해서 아래의 기능 역시 수행
+
+* 원하는 key를 가졌는지 확인이 가능하며, 모든 객체를 key로 가질 수 있다. (Object와 가장 큰 차이)
+
+* key-value를 추가, 삭제 가 가능하며, 갯수를 다 count할 수 있음.
+
+```javascript
+// 키의 중복 불허 - 해당 키 있을 시 덮어씀
+map2.set('x', 2);
+
+console.log(map2);
+
+// has 메서드 - 요소 포함여부 확인
+console.log (
+  map2.has('x'),
+  map2.has('y')
+);
+//true false
+
+// get 메서드 - 값에 접근
+console.log(
+  map2.get('x'),
+  map2.get(123),
+  map2.get(true),
+
+  // 없는 키로 접근시
+  map2.get('y')
+);
+//2 'ABC' {a: 1, b: 2} undefined
+
+
+
+// 💡 참조값도 키로 사용 가능
+const objKey = { x: 1, y: 2 };
+const arrKey = [1, 2, 3];
+
+map2.set(objKey, 'OBJ_KEY');
+map2.set(arrKey, 'ARR_KEY');
+
+console.log(map2);
+//Map(5) {'x' => 2, 123 => 'ABC', true => {…}, {…} => 'OBJ_KEY', Array(3) => 'ARR_KEY'}
+
+
+// ⚠️ [참조값]이 키임에 유의 => 아래의 경우, 원하는 결과를 얻을 수 없다.
+// 💡 5-1강의 객체와 비교해 볼 것
+console.log(
+  map2.get({ x: 1, y: 2 }),
+  map2.get([1, 2, 3])
+);
+//undefined undefined
+
+// 또한, map 객체의 각 요소를 추가,삭제할 수 있으며, map 객체의 요소 갯수를 정확하게 간편히 count할 수 있다.
+
+
+
+// delete 메서드 - 요소 제거 & 성공 여부 반환
+console.log(
+  map2.delete('x'),
+  map2.delete(objKey),
+  map2.delete({x: 3, y: 4})
+);
+console.log(map2);
+//true true false
+//Map(3) {123 => 'ABC', true => {…}, Array(3) => 'ARR_KEY'}
+
+
+// add 메서드는 결과 맵을 반환
+// 💡 메서드 체이닝을 할 수 있다는 의미
+const map3 = map2
+.set(1, 'X')
+.set(2, 'Y')
+.set(3, 'Z');
+
+console.log(map2, map3);
+//Map(6) {123 => 'ABC', true => {…}, Array(3) => 'ARR_KEY', 1 => 'X', 2 => 'Y', …}
+//Map(6) {123 => 'ABC', true => {…}, Array(3) => 'ARR_KEY', 1 => 'X', 2 => 'Y', …}
+
+
+
+//map 객체의 요소가 몇 개인지, "type"에 관계하지 않고 정확하게 다 셀 수 있다.
+// size 프로퍼티 - 요소의 개수
+console.log(
+  map2.size
+);
+//6
+
+
+//map의 키,값,entries들을 모두 반환하는 함수 존재
+//이 때 MapIterator 타입이다. (의문 : 실제로 이런 타입은 없던데, 콘솔창에 이렇게 뜨길래 일단 정리함)
+// keys, values, entries 메서드 - 키 / 값 / [키, 값] 반환
+console.log(
+  map2.keys(),
+  map2.values(),
+  map2.entries()
+);
+//MapIterator {123, true, Array(3), 1, 2, …} 
+//MapIterator {'ABC', {…}, 'ARR_KEY', 'X', 'Y', …} 
+//MapIterator {123 => 'ABC', true => {…}, Array(3) => 'ARR_KEY', 1 => 'X', 2 => 'Y', …}
+
+
+// clear 메서드 - 모든 요소들을 삭제
+map2.clear();
+
+console.log(map2, map3);
+```
+
+
+
+map 객체는 iterable 하므로, 각 key-value를 순환할 수 있다.
+
+```javascript
+const arr = [
+  ['🐶', '강아지'],
+  ['🐱', '고양이'],
+  ['🐯', '호랑이'],
+  ['🐵', '원숭이'],
+  ['🐨', '코알라']
+];
+const map = new Map(arr);
+
+for ([key, value] of map) {
+  console.log(key, value);
+}
+
+//디스트럭쳐링
+const [a, b, ...rest] = map;
+
+console.log(a);
+console.log(b);
+console.log(rest);
+
+
+// 아래의 결과와 같음
+// map.forEach((item, idx, set) => {
+//   console.log(item, idx, set)
+// });
+map.forEach(console.log);
+```
+
+
+
+
+
+
+
+가장 큰 궁금증
+
+* Object와 Map의 차이점
+
+  * 위의 의문을 생각하게 된 계기
+    * Object는 각 프로퍼티가 key-value로서 이루어져 있고, Map 함수로 만들어진 map 타입의 객체 역시 key-value를 활용한다
+    * 그렇다면, 굳이 별도의 map 객체를 정의해야 할 필요가 있을까? 하는 생각이 든다
+  * 차이점 1. key 값
+    * Object는 key 값으로 사실상 string이나 Symbol만 가능
+    * map은 key값으로 모든 타입이 가능 => Object 역시 가능
+  * 차이점 2. key - value 삽입 순서
+    * Object는 삽입한 프로퍼티 순서대로 key가 항상 정렬되지는 않는다
+    * Map은 삽입한 프로퍼티 순서대로 key가 정렬된다.
+  * 차이점 3. 빈번한 key-value 삽입/삭제 시
+    * (내 생각) 이 부분은 확인이 필요하다. 이론적으로 밝히기에는 쉽지가 않다
+    * Object는 빈번한 추가/삭제 에 대한 최적화가 되어 있지 않다
+    * Map은 빈번한 추가/삭제 에 대한 최적화가 되어 있다
+
+  * 차이점 4. Iteration / Enumerable 여부
+    * Map은 Iterable 하다.
+    * Object는 Iterable 하지 않고, Enumerable 하다
+      * 따라서, for ... in 구문이나 Object.keys() 함수를 써야 한다
+  * 차이점 5. JSON 변환 여부
+    * Object는 JSON 직렬화/역직렬화가 가능
+    * map은 JSON 직렬화/역직렬화가 "바로는" 불가능. (다만, JSON.stringify() 나 JSON.parse() 의 2번쨰 인자 함수를 통해서, 조정해서 직렬화를 할 수는 있다.)
+  * 차이점 6. 사이즈 크기 구하기
+    * Object는 프로퍼티의 갯수를 구하는 것을 수동으로 해야 한다
+      * 열거 불가능하거나, Symbol이 있거나...... 등의 변수가 있기 떄문
+    * Map은 size() 의 함수를 통해, 크기를 정확하게 구할 수 있다.
+
+  * 출처
+    * https://velog.io/@namda-on/JavaScript-Map-%EA%B3%BC-Object-%EC%9D%98-%EC%B0%A8%EC%9D%B4
+    * (Map 과 Object의 성능 차이에 대해 직접 실험으로 확인하는 예시)
+      * https://velog.io/@oneook/%EB%B2%88%EC%97%AD-%EC%9E%90%EB%B0%94%EC%8A%A4%ED%81%AC%EB%A6%BD%ED%8A%B8-Map%EC%9D%84-Object-%EB%8C%80%EC%8B%A0-%EC%82%AC%EC%9A%A9%ED%95%B4%EC%95%BC%ED%95%A0-%EB%95%8C%EB%8A%94-%EC%96%B8%EC%A0%9C%EC%9D%BC%EA%B9%8C%EC%9A%94
+
+
+
+* 참고
+  * for... in 과 for... of의 차이점
+    * for... in은 객체의 Enumerable한 프로퍼티에 대해 반복순회, for... of는 iterable한 객체에 대해 key-Value를 반복 순회
+    * 출처 : https://velog.io/@bining/javascript-for-in-for-of-forEach-%EC%B0%A8%EC%9D%B4%EC%A0%90
+    * https://velog.io/@adguy/for..in-vs-for..of-Enumerable-vs-Iterable-%EC%9A%94%EB%85%80%EC%84%9D%EB%93%A4%EC%97%90-%EB%8C%80%ED%95%9C-%EB%82%98%EB%A6%84%EC%9D%98-%EA%B3%A0%EC%B0%B0

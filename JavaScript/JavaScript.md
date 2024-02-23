@@ -7171,3 +7171,4422 @@ map.forEach(console.log);
     * for... in은 객체의 Enumerable한 프로퍼티에 대해 반복순회, for... of는 iterable한 객체에 대해 key-Value를 반복 순회
     * 출처 : https://velog.io/@bining/javascript-for-in-for-of-forEach-%EC%B0%A8%EC%9D%B4%EC%A0%90
     * https://velog.io/@adguy/for..in-vs-for..of-Enumerable-vs-Iterable-%EC%9A%94%EB%85%80%EC%84%9D%EB%93%A4%EC%97%90-%EB%8C%80%ED%95%9C-%EB%82%98%EB%A6%84%EC%9D%98-%EA%B3%A0%EC%B0%B0
+
+
+
+
+
+## 섹션 11. 문제들에 대비하기
+
+### 에러 핸들링
+
+개요
+
+* 코드 실행 중, 에러가 발생하게 되면, 에러 메세지를 띄우면서 뒤의 코드는 실행되지 않는다
+
+  => 따라서, 코드의 흐름을 계속 유지하고 싶다면, try - catch 문을 활용하자.
+
+  * ```javascript
+    console.log('에러 발생 전');
+    
+    // ⚠️ 오류를 발생시키는 코드
+    (3).split('');
+    
+    // 출력되지 않음
+    console.log('에러 발생 후');
+    
+    
+    
+    //결과는 아래와 같다
+    
+    //에러 발생 전
+    //Uncaught TypeError: 3.split is not a function at <anonymous>:4:5
+    ```
+
+    => "에러 발생 후" 는 안 찍힘을 알 수 있다.
+
+  * ```javascript
+    //try - catch 문 적용
+    
+    console.log('에러 발생 전');
+    
+    try {
+      (3).split('');
+    
+    } catch (e) {
+      console.error('🛑 에러!!', e);
+    }
+    
+    console.log('에러 발생 후');
+    
+    
+    //에러 발생 전
+    //🛑 에러!! TypeError: 3.split is not a function at <anonymous>:6:7
+    //에러 발생 후
+    ```
+
+    => 코드 흐름이 정상적으로 유지가 됨을 확인할 수 있다.
+
+  * try - catch 문을 응용한다면, 배열의 요소 중, 문자열에 해당하는 것만 각 문자를 담은 배열을 반환하고, 문자열이 아니면 빈 배열을 반환하는 로직을 짤 수 있다.
+
+    ```javascript
+    const arr = ['ABC', '가나다', 123, '123'];
+    
+    function getLetterArray (str) {
+      // 💡 인자로 어떤 타입의 값이 주어질지 모르는 상황
+      try {
+        return str.split('');
+    
+      } catch (e) {
+        console.error('🛑 에러!!', e);
+        return [];
+      }
+    }
+    
+    arr.forEach(i => {
+      console.log(getLetterArray(i));
+    });
+    
+    //['A', 'B', 'C']
+    //['가', '나', '다']
+    //🛑 에러!! TypeError: str.split is not a function at getLetterArray (<anonymous>:6:16) at <anonymous>:15:15 at Array.forEach (<anonymous>)at <anonymous>:14:5       
+    //[]
+    //['1', '2', '3']
+    ```
+
+  * try - catch를 실행하고 나서, 반드시 실행되고자 하는 구문을 추가하고자 할 떄는, try - catch - finally 구문을 사용하자
+
+    => try나 catch 문에 return 구문이 있어도, finally 구문이 반드시 실행된다는 점이 주목된다.
+
+    ```javascript
+    function connect () { console.log('☀️', '통신 연결'); }
+    function disconnect () { console.log('🌙', '통신 연결 해제'); }
+    function sendArray (arr) { console.log('전송', arr); }
+    
+    function sendStringAsArray (str) {
+      connect();
+    
+      try {
+        sendArray(str.split(''));
+        return true;
+    
+      } catch (e) {
+        console.error('🛑 에러!!', e);
+        return false;
+    
+      } finally {
+        // 💡 전송 성공 여부와 관계없이 연결은 끊어야 함
+        disconnect();
+        console.log('- - - - - - - -');
+      }
+    
+      // ❓ 이곳에 넣는 것과 무엇이 다른가?
+      // 아래로 대체하여 실행해 볼 것
+      // disconnect();
+      // console.log('- - - - - - - -');
+    }
+    
+    ['ABC', '가나다', 123, '123'].forEach(i => {
+      console.log(
+        sendStringAsArray(i) 
+        ? '[성공]' : '[실패]', '\n\n'
+      );
+    });
+    
+    
+    
+    //☀️ 통신 연결
+    //전송 (3) ['A', 'B', 'C']
+    //🌙 통신 연결 해제
+    //- - - - - - - -
+    //[성공] 
+    
+    
+    //☀️ 통신 연결
+    //전송 (3) ['가', '나', '다']
+    //🌙 통신 연결 해제
+    //- - - - - - - -
+    //[성공] 
+    
+    
+    //☀️ 통신 연결
+    //🛑 에러!! TypeError: str.split is not a function
+    //    at sendStringAsArray (<anonymous>:9:19)
+    //    at <anonymous>:30:5
+    //    at Array.forEach (<anonymous>)
+    //    at <anonymous>:28:28
+    //sendStringAsArray
+    //(anonymous)
+    //(anonymous)
+    //🌙 통신 연결 해제
+    //- - - - - - - -
+    //[실패] 
+    
+    
+    //☀️ 통신 연결
+    //전송 ['1', '2', '3']
+    //🌙 통신 연결 해제
+    //- - - - - - - -
+    //[성공] 
+    
+    ```
+
+* Error 객체
+
+  * 직접 생성하는 것이 가능
+
+  * 2번째 인자로 cause 프로퍼티를 추가할 수 있다. (MDN 스펙에 명시되어 있음)
+
+    * (실험 결과) cause 이름 외에 다른 이름의 프로퍼티를 추가하려고 하면, 무시된다. (아마 내부적으로 그렇게 짜여져 있지 않았나 싶다.)
+
+      => (내 생각) cause 프로퍼티 이름 자체가 회색이며, error.xxx 로 다른 임의의 프로퍼티를 추가할 때 노란색인 걸 보면(엣지 기준), cause 프로퍼티는 내부적으로 특별한 프로퍼티로서 간주되는 듯 하다.
+
+    ```javascript
+    const error = new Error('뭔가 잘못됐어');
+    
+    console.dir(error);
+    //Error: 뭔가 잘못됐어at <anonymous>:1:13
+    //	message: "뭔가 잘못됐어"
+    //	stack: "Error: 뭔가 잘못됐어\n    at <anonymous>:1:13"
+    //	[[Prototype]]: Object
+    //		constructor: ƒ Error()
+    //		message: ""
+    //		name: "Error"
+    //		toString: ƒ toString()
+    //		[[Prototype]]: Object
+    
+    
+    
+    // 두 번째 인자로 이유를 명시할 수도 있음
+    const error = new Error(
+      '뭔가 잘못됐어',
+      { cause: '뭘 잘못했으니까' }
+    );
+    
+    console.dir(error);
+    //cause 프로퍼티는, 프로토타입에 정의된 걸 덮어씌우지 않고, 객체의 프로퍼티로서 추가된다. (즉, error.cause로 cause 프로퍼티를 호출할 때, 이 때부터는 객체의 프로퍼티의 cause가 호출이 된다.)
+    ```
+
+  * 기본 인스턴스 프로퍼티 및 메서드는 아래와 같으며, 의도적으로 에러를 발생시키는 것도 가능하다.
+
+    ```javascript
+    // 두 번째 인자로 이유를 명시할 수도 있음
+    const error = new Error(
+      '뭔가 잘못됐어',
+      { cause: '뭘 잘못했으니까' }
+    );
+    
+    console.log(error.name);
+    console.log(error.message);
+    
+    // cause를 입력했을 경우
+    console.log(error.cause);
+    
+    // 에러 자체를 로그 출력하면 나오는 문구
+    console.log(error.toString());
+    
+    
+    
+    //Error
+    //뭔가 잘못됐어
+    //뭘 잘못했으니까
+    //Error: 뭔가 잘못됐어
+    ```
+
+    ```javascript
+    //의도적으로 에러 발생시키기
+    throw new Error('이유를 묻지 마라');
+    ```
+
+* 에러의 여러 종류
+
+  * 여러 종류의 에러들이 있으나, 모두 Error (정확하게는 Error function 이라고 하는 게 맞지 않나..... 라는 게 내 생각)를 상속받는다
+
+    * SyntaxError
+    * TypeError
+    * ReferenceError
+    * RangeError
+    * 이외 여러 가지 Error 참고 : [Error - JavaScript | MDN (mozilla.org)](https://developer.mozilla.org/ko/docs/Web/JavaScript/Reference/Global_Objects/Error#오류_유형)
+
+  * 에러의 예시
+
+    * ```javascript
+      const x x;
+      //Uncaught SyntaxError: Missing initializer in const declaration
+      ```
+
+    * ```
+      const errorFuncs = [
+        // 자료형에 맞지 않는 메서드 호출
+        () => { (3).split(''); },
+      
+        // 선언되지 않은 함수 호출
+        () => { hello(); },
+      
+        // 부적절한 숫자를 인자로 전달
+        () => { (123.45).toFixed(-1); }
+      ];
+      ```
+
+    * ```javascript
+      //에러를 출력
+      const errorFuncs = [
+        // 자료형에 맞지 않는 메서드 호출
+        () => { (3).split(''); },
+      
+        // 선언되지 않은 함수 호출
+        () => { hello(); },
+      
+        // 부적절한 숫자를 인자로 전달
+        () => { (123.45).toFixed(-1); }
+      ];
+      
+      errorFuncs.forEach(func => {
+        try {
+          func();
+      
+        } catch (e) {
+          console.error(e);
+          console.log(e.name);
+          console.log(e.message, '\n\n');
+        }
+      });
+      
+      
+      //TypeError: 3.split is not a function
+      //TypeError
+      //3.split is not a function 
+      
+      //ReferenceError: hello is not defined
+      //ReferenceError
+      //hello is not defined
+      
+      //RangeError: toFixed() digits argument must be between 0 and 100
+      //RangeError
+      //toFixed() digits argument must be between 0 and 100
+      
+      ```
+
+  * 에러의 종류에 따라 대처하는 코드(에러 발생 시, 흐름이 끊어지지 않게끔 짠 코드)
+
+    ```javascript
+    const errorFuncs = [
+      // 자료형에 맞지 않는 메서드 호출
+      () => { (3).split(''); },
+    
+      // 선언되지 않은 함수 호출
+      () => { hello(); },
+    
+      // 부적절한 숫자를 인자로 전달
+      () => { (123.45).toFixed(-1); }
+    ];
+    
+    errorFuncs.forEach(func => {
+      try {
+        func();
+    
+      } catch (e) {
+        if (e instanceof TypeError) {
+          console.error('자료형 확인하세요.');
+          return;
+        }
+        if (e instanceof ReferenceError) {
+          console.error('선언 안 된 거 쓴 거 없는지 확인하세요.');
+          return;
+        }
+        console.error('아니, 뭘 한 거에요?');
+      }
+    });
+    
+    //자료형 확인하세요.
+    //선언 안 된 거 쓴 거 없는지 확인하세요.
+    //아니, 뭘 한 거에요?
+    ```
+
+  * 에러를 수동으로 생성하여, 개발자가 원하는 형식의 데이터만 받도록 코드를 짤 수 있다.
+
+    ```javascript
+    // 특정 월의 당번으로 지원하는 함수
+    function applyForMonth (date) {
+      try {
+        if (typeof date !== 'number') {
+          throw new TypeError('숫자로 입력해주세요.');
+        }
+        if (date < 1 || date > 12) {
+          throw new RangeError('유효한 월을 입력해주세요.');
+        }
+    
+        console.log(`${date}월 당번으로 등록되셨습니다.`);
+    
+      } catch (e) {
+        console.error('🛑 에러 발생!', e);
+        console.log('다시 등록해주세요.');
+      }
+    }
+    
+    applyForMonth(5);
+    applyForMonth('5');
+    applyForMonth(13);
+    
+    //5월 당번으로 등록되셨습니다
+    
+    //🛑 에러 발생! TypeError: 숫자로 입력해주세요.
+    //다시 등록해주세요.
+    
+    //🛑 에러 발생! RangeError: 유효한 월을 입력해주세요.
+    //다시 등록해주세요.
+    ```
+
+* 커스텀 에러 만들기
+
+  * Error (function)을 상속받은 새로운 Error 클래스를 정의할 수 있다.
+
+    * 참고 : function을 상속받은 클래스를 정의하는 것이 가능하다. (실험해 봄)
+
+    * 아래의 경우는, 계급(position)과 말한 단어(word)를 입력받을 때, word의 끝이 다/까로 끝나지 않으면, position에 따라 각기 다른 error message를 출력하는 코드를 보여준다
+
+      ```javascript
+      class MilitaryError extends Error {
+        constructor (position, ...params) {
+          super(...params); // 이 때, MilitaryError 내의 message 프로퍼티가 정의된다.
+      
+          this.name = 'MilitaryError';
+      
+          switch (position) {
+            case '이병':
+              this.message = '개판이군. 맞선임 데려와봐.';
+              break;
+            case '일병':
+              this.message += ' 엎드려 뻗쳐.';
+              break;
+            case '상병':
+              this.message = '짬을 거꾸로 먹었나. ' + this.message;
+              break;
+            default:
+              this.message = '집에 갈 때 됐다 이거지? ㅎㅎ';
+          }
+        }
+      }
+      
+      class Soldier {
+        constructor (position) {
+          this.position = position;
+        }
+      
+        speak (word) {
+          console.log(this.position + ':', word);
+          try {
+            if (!'다나까'.includes(word.at(-1))) {
+              throw new MilitaryError(
+                this.position,
+                '군대에서 모든 말은 다나까로 끝낸다.'
+              );
+            }
+      
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      }
+      
+      ['이병', '일병', '상병', '병장'].forEach(pos => {
+        const soldier = new Soldier(pos);
+        soldier.speak('무슨 일입니까');
+        soldier.speak('왜요');
+      });
+      ```
+
+* 에러 버블링을 활용하여 로직 짜기
+
+  * 에러를 발생시키면, 해당 함수 내에서 처리 못하면 호출된 곳으로 에러가 넘어가게 된다.
+
+    * 이를 활용하여, 에러가 주어진다면, 사장을 제외한 아래 직급에서 해결할 수 있는 에러는, 제일 말단에서 처리되도록
+    * if문에서, undefined는 false로 인식하며, null이 아닌 모든 객체는 treue로 인식함을 활용 (심지어 error 객체도 true로 인식)
+
+    ```javascript
+    function func1 (e) { // 사원
+      try {
+        console.log(e);
+        if (e) { throw e }
+        console.log('저 가 봐도 되죠?');
+        console.log('- - - - - - - - - -');
+    
+      } catch (e) {
+        if (e instanceof SyntaxError) {
+          console.error('저 이건 알아요!', e);
+          console.log('- - - - - - - - - -');
+          return;
+        }
+        console.log('대리님, 이거 뭐에요?');
+        throw e; // 💡 처리하지 못하는 에러는 윗선으로 던짐
+      }
+    }
+    
+    function func2 (e) { // 대리
+      try {
+        func1(e);
+      } catch (e) {
+        if (e instanceof TypeError) {
+          console.error('내가 할 테니 가봐요.', e);
+          console.log('- - - - - - - - - -');
+          return;
+        }
+        console.log('부장님, 이건 제 선에서 안 되겠습니다.');
+        throw e;
+      }
+    }
+    
+    function func3 (e) { // 부장
+      try {
+        func2(e);
+      } catch (e) {
+        if (e instanceof ReferenceError) {
+          console.error('잘 하자, 응?', e);
+          console.log('- - - - - - - - - -');
+          return;
+        }
+        console.log('사장님, 이것 좀 보셔야겠습니다.');
+        throw e;
+      }
+    }
+    
+    function func4 (e) { // 사장
+      try {
+        func3(e);
+    
+      } catch (e) {
+        console.error('전원 집합.', e);
+      }
+    }
+    
+    func4(); //이 떄 e가 undefined이므로, if이 false가 된다.
+    //저 가 봐도 되죠?
+    //- - - - - - - - - -
+    
+    func4(new SyntaxError());
+    //저 이건 알아요! SyntaxError
+    //- - - - - - - - - -
+    
+    func4(new TypeError());
+    //대리님, 이거 뭐에요?
+    //내가 할 테니 가봐요. TypeError
+    //- - - - - - - - - -
+    
+    func4(new ReferenceError);
+    //대리님, 이거 뭐에요?
+    //부장님, 이건 제 선에서 안 되겠습니다.
+    //잘 하자, 응? ReferenceError
+    //- - - - - - - - - -
+    
+    func4(new RangeError);
+    //대리님, 이거 뭐에요?
+    //부장님, 이건 제 선에서 안 되겠습니다.
+    //사장님, 이것 좀 보셔야겠습니다.
+    //전원 집합. RangeError
+    ```
+
+
+
+참고
+
+* constructor 활용 시, super()를 활용하면, super()를 호출하는 주체는 자식 객체이다.
+
+  * 따라서, 부모 constructor 내부에 정의된 프로퍼티 정의 코드들은, 자식 객체의 프로퍼티로 자동으로 할당한다. (이 경우 부모 constructor 내부의 this는 자식 객체이기 때문이다.)
+* 실험해보니, function을 상속받은 클래스를 정의하는 것이 가능하다.
+  * (내 생각 - 클래스의 prototype이 function, 즉 prototype으로 상속을 정의하니까 가능하지 않을까... 생각한다.)
+
+
+
+
+### 구시대의 유물 var
+
+* var과 let/const와의 차이점
+
+  * 미리 선언한 변수가 없는 상태에서, 변수 정의 시, 기본적으로 var로 선언된다.
+
+    ```javascript
+    notDeclared = 1; // 미리 선언한 부분이 없을 시 var로 만들어짐
+    console.log(notDeclared);
+    
+    // num이 var로 선언된 것
+    for (num of [1, 2, 3]) {
+      console.log(num);
+    }
+    ```
+
+  * var로 선언한 변수는 재선언이 가능하나, let이나 const로 선언한 변수는 재선언을 하면 오류가 발생한다.
+
+    ```javascript
+    let a = 1;
+    let a = 2; // ⚠️ 오류
+    ```
+
+    ````javascript
+    const b = 1;
+    const b = 2; // ⚠️ 오류
+    ````
+
+    ```javascript
+    var c = 1;
+    var c = 2;
+    ```
+
+    * (내 생각) ES6으로 들어오면서 코딩의 실수를 줄이기 위해서, var와 달리 재선언을 막은 것이 아닐까.... 라는 생각이 든다.
+
+  * var로 선언한 변수는 블록 scope가 무시되며, let/const로 선언한 변수는 블록 scope에 따라 변수의 값이 달라진다.
+
+    * 이는 for문 scope에 대해서도 동일하게 적용된다.
+
+      * ```javascript
+        let num1 = 1;
+        {
+          let num1 = 2;
+          {
+            let num1 = 3;
+          }
+        }
+        
+        console.log(num1);
+        //1
+        
+        var num2 = 1;
+        {
+          var num2 = 2;
+          {
+            var num2 = 3;
+          }
+        }
+        
+        console.log(num2);
+        //3
+        ```
+
+      * ```javascript
+        // for문의 스코프도 무시
+        for (var i = 0; i < 5; i++) {
+          var pow2 = i ** 2;
+          console.log(pow2);
+        }
+        
+        console.log(i, pow2);
+        
+        //0
+        //1
+        //4
+        //9
+        //16
+        //5 16
+        ```
+
+      * 다만, 함수 scope에 대해서는, var로 선언한 변수일지라도, 해당 함수의 scope내에서만 변수가 유효하다.
+
+        ```javascript
+        var num3 = 1;
+        
+        function func1 () {
+          var num3 = 2;
+          return num3;
+        }
+        
+        console.log(num3); //1
+        console.log(func1()); //2
+        ```
+
+  * var로 선언된 변수나 const/let으로 선언된 변수 모두 hoisting이 된다.
+
+    * 다만, var로 선언된 변수는 undefined로 초기화되어 console에 찍을 수 있지만, let/const로 선언된 변수는 uninitialized로 (맞는지 확인) 초기화되므로 이 변수를 console에 찍으려고 하면 에러 발생.
+    * (확인해보니) let도 hoisting이 되지만, TDZ에 속해서 오류가 생긴다고 한다.
+
+
+
+### 엄격 모드
+
+* 문서나, 함수 최상단에 'use strict' 를 작성해서 사용한다. (꼭 최상단에 사용하여야만 한다.)
+
+  ```javascript
+  notDeclared = 1; // 💡 암묵적으로 전역 var 변수로 선언
+  ```
+
+  ```javascript
+  // ⚠️ 새로고침 후 실행해볼 것
+  // 선언되지 않은 변수 사용 금지
+  'use strict'; // 쌍따옴표도 가능
+  
+  notDeclared = 1; // 오류 발생!
+  
+  //Uncaught ReferenceError: notDeclared is not defined at <anonymous>:5:13
+  ```
+
+  ```javascript
+  //'use strict' 를 함수 내부의 최상단에 작성 시, 해당 함수 내에서만 엄격모드가 작동된다.
+  
+  notDec1 = 1;
+  
+  function strictFunc () {
+  'use strict';
+  
+   notDec2 = 2;
+   console.log(notDec2);
+  }
+  
+  console.log(notDec1);
+  strictFunc();
+  
+  //1
+  //Uncaught ReferenceError: notDec2 is not defined at strictFunc (<anonymous>:6:10) at <anonymous>:11:1
+  ```
+
+  
+
+* 엄격 모드는, 태그별 or 문서별로만 동작함.
+
+  ```html
+  <!DOCTYPE html>
+  <html lang="ko">
+  <head>
+  <script src="./1.js"></script>
+  <script src="./2.js"></script>
+  </head>
+  </html>
+  ```
+
+  ```javascript
+  // 1.js
+  'use strict';
+  x = 1;
+  console.log(x); // 오류 발생
+  ```
+
+  ```javascript
+  // 2.js
+  y = 2;
+  console.log(y); // 오류 발생하지 않음
+  ```
+
+* 엄격 모드에서는, 삭제 불가한 것을 삭제 시 오류가 발생한다.
+
+  * 삭제 불가한 것의 예로는, 변수, 함수, 인자 등이 해당된다.
+
+  ```javascript
+  // 실제로 지워지지도 않지만 오류를 발생시키지도 않음
+  
+  let toDelete1 = 1;
+  delete toDelete1;
+  
+  console.log('1.', toDelete1);
+  
+  //1. 1
+  ```
+
+  ```javascript
+  function funcToDel1 () { console.log(true); }
+  delete funcToDel1;
+  
+  console.log('2.', funcToDel1);
+  
+  //2. ƒ funcToDel1 () { console.log(true); }
+  ```
+
+  ```javascript
+  'use strict';
+  
+  let toDelete2 = 1;
+  delete toDelete2;
+  
+  //Uncaught SyntaxError: Delete of an unqualified identifier in strict mode.
+  ```
+
+* 엄격 모드에서는, 인자명이 중복된 경우 오류가 발생한다.
+
+  * (내 생각) 함수에 대해, 동일한 이름의 인자를 2개 이상 받게 되면, 맨 나중에 지정된 인자의 값이 최종적으로 할당되는 듯 하다.
+
+    ```javascript
+    function add(x, x) {
+      return x + x;
+    }
+    
+    console.log(add(1, 2));
+    
+    //4
+    ```
+
+    ```javascript
+    'use strict';
+    
+    function add2(x, x) {
+      return x + x;
+    }
+    
+    console.log(add2(1, 2));
+    
+    //Uncaught SyntaxError: Duplicate parameter name not allowed in this context
+    ```
+
+
+
+
+
+### 옵셔널 체이닝
+
+* 존재하지 않은 값이나, 정체를 확실히 모르는 데이터에 대해서, 프로퍼티를 호출할 때 발생하는 에러를 방지하는 법이다.
+
+  * 아래의 경우, 에러가 발생한다.
+
+    ```javascript
+    // undefined로부터 값에 접근할 때
+    let undefObj;
+    console.log(undefObj.x);
+    ```
+
+    ```javascript
+    // null부터 값에 접근할 때
+    let nullObj = null;
+    console.log(nullObj.x);
+    ```
+
+    ```javascript
+    // 무효한 배열에 접근할 때
+    let undefArry;
+    console.log(undefArry[1]);
+    ```
+
+    ```javascript
+    // 존재하지 않는 함수를 호출할 때
+    let noFunc = {}
+    noFunc.func();
+    ```
+
+  * 아래의 경우, prop3이 있을 수도 있고, 없을 수도 있다. 
+
+    * 없다면, 에러가 발생하게 되므로, 이러한 경우까지 다룰 수 있는 코드 작성이 필요하다.
+
+      ```javascript
+      // 최소 undefined
+      // 최대 {prop1:{prop2:{prop3:'성공!'}}}
+      // 까지 반환하는 함수
+      const rand = () => Math.random() < 0.75;
+      
+      const notSure = () => rand() ? {
+        prop1: rand() ? {
+          prop2: rand() ? {
+            prop3: rand() ? '성공!' : undefined
+          } : undefined
+        } : undefined
+      } : undefined;
+      
+      //prop3이 없을 수도 있다.
+      
+      console.log(JSON.stringify(notSure())); //값이 undefined 인 프로퍼티는, 직렬화될 때, 무시된다.
+      ```
+
+      ```javascript
+      const result = notSure();
+      console.log(JSON.stringify(result));
+      
+      // ⚠️ 바로 접근하려 할 시에는 실패시 에러
+      console.log(result.prop1.prop2.prop3);
+      ```
+
+    * prop3이 없는 경우까지 다루는 코드는 아래와 같이 작성할 수 있다.,
+
+      * undefined는 falsy 한 성질을 이용
+
+        ```javascript
+        // 방법 1
+        const result = notSure();
+        
+        if (result) {
+          if (result.prop1) {
+            if (result.prop1.prop2) {
+              console.log(result.prop1.prop2.prop3);
+            }
+          }
+        }
+        ```
+
+      * && 연산자 이용 (맨 마지막의 데이터가 출력되거나, falsy한 맨 첫번째 데이터가 출력되는 점을 이용)
+
+        ```javascript
+        // 방법 2
+        const result = notSure();
+        
+        console.log(
+          result
+          && result.prop1
+          && result.prop1.prop2
+          && result.prop1.prop2.prop3
+        );
+        ```
+
+      * try - catch 활용
+
+        ```javascript
+        // 방법 3
+        const result = notSure();
+        
+        try {
+          console.log(result.prop1.prop2.prop3);
+        } catch {
+        console.log('qqqq');
+        }
+        ```
+
+    * 참고사항
+
+      * undefined 값에서, 함수 프로퍼티를 호출하려고 할 때에는, 에러 발생
+        * 이외 객체에서, 정의되지 않은 프로퍼티를 호출할 때 undefined 반환
+      * 객체를 직렬화할 때, undefined 프로퍼티는 무시된다.
+
+  * 위 코드 외에도, 옵셔널 체이닝을 통해서 코드를 짤 수 있다.
+
+    * 호출 대상이 undefined거나 null인 경우, 프로퍼티를 호출하면 오류가 발생
+
+      * 또는, 호출 대상이 불분명한 경우, 특정 값을 호출할 때 오류가 발생할 수 있다.
+
+      => 이러한 경우에 대해, 오류가 일어나지 않게끔 하고 undefined를 반환한다.
+
+      ```javascript
+      let undef = undefined;
+      
+      console.log(
+        undef?.x,
+        undef?.['x'],
+        undef?.[1],
+        {}.func?.()
+      );
+      //undefined undefined undefined undefined
+      ```
+
+      ```javascript
+      // 옵셔널 체이닝을 사용한 방법
+      const result = notSure();
+      
+      console.log(
+        result?.prop1?.prop2?.prop3
+      );
+      ```
+
+      ```javascript
+      //유무가 불확실할 때에도 옵셔널 체이닝을 활용할 수 있다.
+      const objs = [
+        { func () { console.log(1) } },
+        {},
+        { func () { console.log(2) } },
+        {},
+        { func () { console.log(3) } },
+      ]
+      
+      objs.forEach(o => o.func?.());
+      //1
+      //2
+      //3
+      // //undefined (forEach()의 return 된 결과물이 웹 브라우저에 찍힌 것임)
+      
+      // 추가) 콜백함수에 대해 실행하기만 하므로, 2번째와 4번째 인자에 대해서는 브라우저에 undefined 조차 찍히지 않는 것이 맞다.
+      ```
+
+      
+
+## 12강 스코프와 바인딩
+
+### 렉시컬과 클로저
+
+자바 스크립트는 기본적으로 Dynamic Scope가 아니라, Lexical Scope를 따른다.
+
+* 즉, 변수는 함수의 선언 위치에 따라 값이 할당된다고 말할 수 있다. (함수의 호출 위치가 아님!)
+
+  * 참고) 이것이 compile 언어와의 차이가 아닐까 생각한다.,
+  * 참고2) Dynamic Scope의 예로는 Perl 등이 있다고 하나.... 이 부분은 일단 넘어가자.
+  * 출처 : https://velog.io/@tess/Lexical-Scope-vs-Dynamic-Scope
+
+* 아래의 두 예시는, func2가 func1과 동일 레벨에 정의되어 있는 경우와, func2가 func1 내부에 정의된 경우에 대해 차이를 다룬다.
+
+  * ```javascript
+    const x = 1;
+    const y = 1;
+    const z = 1;
+    
+    function func1 () {
+      const y = 2;
+      const z = 2;
+    
+      console.log('2', x, y, z);
+      func2();
+    }
+    
+    function func2 () {
+      const z = 3;
+    
+      console.log('3', x, y, z);
+    }
+    
+    
+    console.log('1', x, y, z)
+    func1();
+    
+    
+    // '1' 1 1 1
+    // '2' 1 2 2
+    // '3' 1 1 3
+    
+    ```
+
+    => 즉, func2 내부의 x,y,z값은, 맨 바깥에 정의된 x,y,z값을 참조한다.
+
+  * ```javascript
+    const x = 1;
+    const y = 1;
+    const z = 1;
+    
+    function func1 () {
+      const y = 2;
+      const z = 2;
+    
+      function func2 () {
+        const z = 3;
+    
+        console.log('3', x, y, z);
+      }
+    
+      console.log('2', x, y, z);
+      func2();
+    }
+    
+    console.log('1', x, y, z)
+    func1();
+    
+    // 1 1 1 1
+    // 2 1 2 2
+    // 3 1 2 3
+    ```
+
+    => 즉, func2는 func1 내부에 정의되어 있으므로, func1 내부에 정의된 x,y,z 변수를 우선적으로 참조한다.
+
+* func2가 func1 내부에 정의된 예시를 다시 살펴보자
+
+  ```javascript
+  const x = 1;
+  const y = 1;
+  const z = 1;
+  
+  function func1 (a) {
+    const y = 2;
+    const z = 2;
+  
+    function func2 (b) {
+      const z = 3;
+  
+      console.log('3', x, y, z, b);
+    }
+  
+    console.log('2', x, y, z, a);
+    func2(a + 1);
+  }
+  
+  console.log('1', x, y, z)
+  func1(1);
+  ```
+
+  * 렉시컬 환경에는, 아래의 3가지로 정리할 수 있다.
+
+    * 전역 렉시컬 환경
+
+      => 해당하는 스코프에는 x=1, y=1, z=1이 정의되어 있다.
+
+    * func1 렉시컬 환경
+
+      * 자체적인 스코프(환경 레코드)를 우선적으로 참조한다.
+
+        => 해당하는 스코프에는 a=1, y=2, z=2가 정의되어 있다.
+
+      * 이후, 해당하는 변수가 없으면, 외부 렉시컬 환경을 참조한다.
+
+        => 여기서는, 외부 렉시컬 환경이 "전역 렉시컬 환경이다"
+
+    * func2 렉시컬 환경
+
+      * 자체적인 스코프(환경 레코드)를 우선적으로 참조한다.
+
+      * 이후, 해당하는 변수가 없으면, 외부 렉시컬 환경을 참조한다.
+
+        => 여기서는, 외부 렉시컬 환경이 "func1 렉시컬 환경이다"
+
+        => 여기에도 참조하고자 하는 변수가 없다면, 더 외부의 렉시컬 환경(전역 렉시컬 환경)을 참조하게 된다.
+
+
+
+* 클로저
+
+  * 내부 함수에서, 외부 함수의 값에 접근할 수 있게끔 하는 개념
+
+    * 내 생각) 컴파일 언어와 구별되는 특징이라고 생각한다. 
+
+  * ```javascript
+    function func1 () {
+      const word = 'Hello';
+    
+      function func2 () {
+        console.log(word);
+      }
+      
+      return func2;
+    }
+    
+    const logHello = func1();
+    
+    logHello();
+    
+    //Hello
+    ```
+
+    * 위의 코드에서, word는 func1 내부에 정의되어 있음에도 불구하고, func2 함수를 가리키는 logHello 에서도 word에 Hello가 할당되어 있음을 확인할 수 있다.
+    * 이는, logHello 내부 (즉, func2 내부)의 클로저에 word 변수의 데이터가 저장되어 있다.
+    * (당연한 말일수도 있겠지만) func1을 호출하기 전까지는, func2는 정의되어 있지 않다. (따라서, 제일 바깥 scope에서 func1을 호출하지 않고 func2를 콘솔에 찍으려고 하면 에러가 발생한다.)
+
+  * 외부 함수를 호출해서, 외부 함수 내부에 정의된 함수를 여러 번 반환받아도, 해당 closure는 1개이다. 
+
+    * 즉 해당 값이 저장되는 외부환경(closure)는 유지된다!
+
+      * (이는 아래의 코드를 통해 유추해 볼 수 있다)
+
+    * 내 생각) 아마 메모리 절약 문제 때문이지 않을까....
+
+      ```javascript
+      function createCounter (start) {
+        let num = start;
+      
+        return function () {
+          console.log(++start);
+          return start;
+        }
+      }
+      //start 변수가 closure에 저장된다.
+      
+      const count = createCounter(10);
+      
+      count(); // ⭐ 반복 실행해 볼 것
+      count(); // ⭐ 반복 실행해 볼 것
+      count(); // ⭐ 반복 실행해 볼 것
+      
+      //11
+      //12
+      //13
+      
+      ```
+
+       => start 변수가 저장되어 있는 closure는 계속 유지가 되기 때문에, start 변수의 값이 계속 증가한다.
+
+  * 함수 내에 정의되어 있는 변수를, 해당 함수 내부 함수가 사용할 때에는 closure에 저장되는 특성을 활용하면 아래의 과정이 가능하다.
+
+    * private field 흉내내기
+
+      * function내부에 지역변수로서 _name, _age를 설정하고, 매개변수를 통해 값을 할당한다
+
+      * 해당 function은 _name 과 _age를 반환하는 메서드를 프로퍼티로 가지는 객체를 반환한다.
+
+        => 외부에서 해당 function을 호출하면, _name과 _age를 반환하는 메서드를 가진 "객체"가 반환된다.
+
+        => 해당 객체의 메서드를 호출하면, closure에 있는 데이터를 활용하게 된다.
+
+        ```javascript
+        function employeeCreator (name, age) {
+          let _name = name;
+          let _age = age;
+        
+          return {
+            name: () => _name,
+            age: () => _age,
+            setAge: function (age) { _age = age; },
+            getOlder: function (years) { _age += years; }
+          }
+        }
+        
+        const employee = employeeCreator('홍길동', 20);
+        
+        console.log(employee);
+        console.log(employee.name(), employee.age());
+        // {name: ƒ, age: ƒ, setAge: ƒ, getOlder: ƒ}
+        // 홍길동 20
+        
+        
+        employee.setAge(25);
+        console.log(employee.name(), employee.age());
+        // 홍길동 25
+        
+        
+        employee.getOlder(3);
+        console.log(employee.name(), employee.age());
+        // 홍길동 28
+        ```
+
+
+
+### this의 동적 바인딩
+
+* 전역에서의 this
+
+  ```javascript
+  console.log(this);
+  ```
+
+  * 브라우저의 콘솔창의 경우는, this는 globalThis
+  * Node.js의 REPL의 경우는, this는 globalThis
+  * .js 문서의 경우, this는 빈 객체
+
+* 함수 안에서의 this
+
+  * 엄격 모드와 느슨한 모드일 때 다르다.
+
+    ```javascript
+    function func () {
+      console.log(this); // globalThis
+    }
+    
+    func();
+    //Window 객체
+    ```
+
+    ```javascript
+    'use strict';
+    
+    function func () {
+      console.log(this); // undefined
+    }
+    
+    func();
+    //undefined
+    ```
+
+    
+
+* 객체 안에서의 this
+
+  * 객체 리터럴 - 해당 객체를 가리킴
+
+    * (내 생각) 화살표 함수를 쓸 수 없는 이유가, x가 어디를 가리키는지 잘 몰라서 그러지 않을까... (아래 코드 참조)
+
+    ```javascript
+    const obj = {
+      x: 123,
+      getX: function () {
+        return this.x;
+      }
+    }
+    
+    console.log(obj.getX()); //123
+    
+    //참고. 아래의 코드도 가능
+    
+    const obj = {
+      x: 123,
+      getX: () => obj.x
+    }
+    
+    console.log(obj.getX()); //123
+    
+    
+    //참고2. 아래의 코드는 안 됨.
+    
+    const obj = {
+      x: 123,
+      getX: () => this.x
+    }
+    
+    console.log(obj.getX());
+    //undefined
+    
+    
+    //참고3. 아래의 코드는 에러가 뜸
+    const obj = {
+      x: 123,
+      getX: () => x
+    }
+    
+    console.log(obj.getX());
+    //Uncaught ReferenceError: x is not defined
+    ```
+
+  * 생성자 함수 - this는 생성될 인스턴스를 가리킨다.
+
+    ```javascript
+    function Person (name, age) {
+      this.name = name;
+      this.age = age;
+      this.introduce = function  () {
+        return `저는 ${this.name}, ${this.age}세입니다.`
+      }
+    }
+    
+    console.log(
+      new Person('홍길동', 20).introduce()
+    );
+    // 저는 홍길동, 20세입니다.
+    ```
+
+  * 클래스 선언 - this는 생성될 인스턴스를 가리킨다
+
+    ```javascript
+    class YalcoChicken {
+      constructor (name, no) {
+        this.name = name;
+        this.no = no;
+      }
+      introduce () {
+        return `안녕하세요, ${this.no}호 ${this.name}점입니다!`;
+      }
+    }
+    
+    console.log(
+      new YalcoChicken('강남', 17).introduce()
+    );
+    
+    //안녕하세요, 17호 강남점입니다!
+    ```
+
+* this의 동적 바인딩
+
+  * 아래의 경우, italian에게 한국 김치찌개 만드는 법을 알려주어야 하는데, this의 동적 바인딩 성질로 인해서, italian이 피자찌개를 만드는 우스꽝 스러운 결과를 초래할 수 있다.
+
+  * ```javascript
+    const korean = {
+      favorite: '김치',
+      makeStew: function (isHot, pots) {
+        return `${isHot ? '매운' : '순한'} ${this.favorite}찌개 ${pots}냄비`;
+      }
+    };
+    
+    const italian = {
+      favorite: '피자'
+    };
+    
+    
+    //1. 한국인이 김치찌개를 끓임
+    console.log(
+      korean.makeStew(true, 1)
+    );
+    //매운 김치찌개 1냄비
+    
+    
+    //2-1. 이탈리안 객체에, 김치찌개 끓이는 비법 함수 삽입
+    // 이탈리아인에게 한국인이 찌개 끓이는 법을 알려줌
+    italian.makeStew = korean.makeStew;
+    
+    
+    //2-2. italian이 makeStew 함수를 호출하면, this가 italian을 가리키므로 아래의 우스꽝스런 결과 초래
+    console.log(
+      italian.makeStew(false, 2)
+    );
+    // 순한 피자찌개 2냄비
+    ```
+
+  * 이제, this가 무엇을 가리키는지 명확하게 드러내는 코드를 작성할 것이다
+
+    => call, apply, bind 함수 호출을 우선적으로 다루자
+
+    * ```javascript
+      const korean = {
+        favorite: '김치',
+        makeStew: function (isHot, pots) {
+          return `${isHot ? '매운' : '순한'} ${this.favorite}찌개 ${pots}냄비`;
+        }
+      };
+      
+      const italian = {
+        favorite: '피자'
+      };
+      
+      // 이탈리아인에게 한국인이 찌개 끓이는 법을 알려줌
+      italian.makeStew = korean.makeStew;
+      
+      
+      //call, apply 함수 호출
+      //this를 인자로 넘겨서, 함수 실행 시 this를 명확히 지시한다.
+      
+      console.log(
+        italian.makeStew.call(korean, false, 2)
+      );
+      //순한 김치찌개 2냄비
+      
+      console.log(
+        italian.makeStew.apply(korean, [false, 2])
+      );
+      //순한 김치찌개 2냄비
+      
+      
+      //bind 함수 호출
+      //bind 함수는, this의 주체를 명확히 한 "함수"를 반환한다.
+      	// + 물론 this를 넘기면서 인자까지 넘기는 것도 가능하다.
+      
+      // ⭐ this가 바인딩된 새 함수를 만듦
+      italian.makeRightStew = korean.makeStew.bind(korean);
+      
+      console.log(
+        italian.makeRightStew(false, 2)
+      );
+      //순한 김치찌개 2냄비
+      
+      
+      // 💡 추가 인자들까지 바인딩 가능 
+      italian.makeClassicStew = korean.makeStew.bind(korean, true, 1);
+      
+      console.log(
+        italian.makeClassicStew()
+      );
+      //매운 김치찌개 1냄비
+      ```
+
+    * 참고) call이나 apply 함수는 this를 인자로 넘기므로, 1회성의 실행이 필요할 때 해당 함수를 활용하는 것이 좋을 것으로 보인다. 
+
+    * bind 함수는, "this가 명확한" 함수를 반환하므로, 아래의 예도 가능하다
+
+      * 어떤 객체에다가, 바인딩된 함수를 프로퍼티로 추가
+
+        => 다른 객체에서 바인딩된 함수를 호출하면, 무조건 위의 객체의 프로퍼티를 활용하게 된다.
+
+      ```javascript
+      const korean = {
+        favorite: '김치',
+        makeStew: function (isHot, pots) {
+          return `${isHot ? '매운' : '순한'} ${this.favorite}찌개 ${pots}냄비`;
+        },
+        teachMakingStew: function () {
+          return this.makeStew.bind(this);
+        }//바인딩된 함수를 프로퍼티로 추가
+      };
+      
+      const italian = {
+        favorite: '피자'
+      };
+      
+      italian.makeStew = korean.teachMakingStew();
+      
+      console.log(
+        italian.makeStew(false, 2)
+      );
+      //순한 김치찌개 2냄비
+      ```
+
+    * 생성자 함수의 경우, 아래의 과정으로 바인딩할 것이다
+
+      * 우선, 함수 프로퍼티 추가
+      * 해당 함수 프로퍼티를 바인딩하고, 해당 함수의 이름(즉, 프로퍼티의 key값) 으로 덮어씌운다.
+
+      ```javascript
+      d
+      function Korean () {
+        this.favorite = '김치';
+        this.makeStew = function (isHot, pots) {
+          return `${isHot ? '매운' : '순한'} ${this.favorite}찌개 ${pots}냄비`;
+        };
+      
+        // 💡 여기서 바인딩을 고정시켜버림
+        this.makeStew = this.makeStew.bind(this);
+      }
+      
+      function Italian () {
+        this.favorite = '피자';
+      }
+      
+      const korean = new Korean();
+      const italian = new Italian();
+      
+      italian.makeStew = korean.makeStew; //이미 바인딩된 함수가 프로퍼티로 추가된다.
+      
+      
+      
+      console.log(
+        italian.makeStew(false, 2)
+      );
+      // 순한 김치찌개 2냄비
+      ```
+
+* 배열 메서드의 thisArg
+
+  * 콜백 함수 내의 this가 가리키는 대상이다
+
+  * 배열 메서드 호출 시, 인자로 넘긴다. (즉, 인자로 this가 가리키는 대상을 명확하게 전달한다.)
+
+  * 아래의 상황에서 활용이 가능하다.
+
+    * 2명의 사람(peter, jane)이 각각의 성별, 사이즈에 해당하는 옷들을 모두 출력하고자 한다. (성별은 공용인 U도 가능하다.)
+
+    * 주어진 상황은 아래와 같다.
+
+      * 2명의 사람은 각각 name(이름), sex(성별), size(사이즈)이 프로퍼티로 주어져 있다.
+
+      * 옷의 목록들이 배열로서 제시되어 있다
+
+        * 옷은 객체로서 정의되어 있고, sex(성별)과 size(사이즈)를 프로퍼티로 가진다.
+
+      * 아래와 같이 코드를 짜자.
+
+        ```JAVASCRIPT
+        //실행할 로직이 담긴 함수
+        //아래에서, thisArg는 me이다. 즉, this는 me를 가리킨다고 할 수 있다.
+        function recommendForYou(me) {
+            const products = [
+            { sex: 'F', size: 'M' },
+            { sex: 'M', size: 'L' },
+            { sex: 'F', size: 'M' },
+            { sex: 'U', size: 'S' },
+            { sex: 'M', size: 'L' },
+            { sex: 'F', size: 'S' },
+            ]; 
+        
+            products.map((itm, idx) => {return {...itm, idx}})
+            .filter(function({sex,size}) {
+                return ['U', this.sex].includes(sex) && this.size===size
+            },me) //이 때 me가 thisArg이다.
+            .forEach(function({idx}){
+                console.log(`${this.name}님, ${++idx}번은 어떠신가요??`)
+            },me)
+        }
+        
+        
+        
+        //2명의 사람
+        const peter = {
+          name: '피터',
+          sex: 'M',
+          size: 'L'
+        };
+        
+        const jane = {
+          name: '제인',
+          sex: 'F',
+          size: 'S'
+        };
+        
+        
+        
+        //실행
+        recommendForYou(peter);
+        recommendForYou(jane);
+        
+        //피터님, 2번은 어떠신가요??
+        //피터님, 5번은 어떠신가요??
+        //제인님, 4번은 어떠신가요??
+        //제인님, 6번은 어떠신가요??
+        ```
+
+
+
+### this의 정적 바인딩
+
+* 객체에서 함수를 프로퍼티로 설정할 때에는 아래와 같이 3가지 종류가 존재한다.
+
+  ```javascript
+  const obj = {
+    // function 선언 함수
+    func1: function () { return true; },
+  
+    // 메서드
+    func2 () { return true; },
+  
+    // 화살표 함수
+    func3: () => true
+  }
+  
+  console.log(
+    obj.func1(),
+    obj.func2(),
+    obj.func3()
+  );
+  ```
+
+  * 아래의 과정을 통해, 생성자 역할을 수행하는 함수는 function으로 선언된 함수일 뿐이다.
+
+    ```javascript
+    const func1 = new obj.func1();
+    const func2 = new obj.func2();
+    const func3 = new obj.func3();
+    ```
+
+    => prototype이 func1에만 정의되어 있기 때문이다.
+
+  * 이외에도 아래의 차이점이 있다. (흐름을 파악하는 것이 우선이므로, 지금은 대략적인 내용만 정리하고 추후 정리하기)
+
+    |                    | 생성자 역할 | 프로토타입 | arguments | super |
+    | ------------------ | ----------- | ---------- | --------- | ----- |
+    | function 선언 함수 | O           | O          | O         | X     |
+    | 메서드             | X           | X          | O         | O     |
+    | 화살표 함수        | X           | X          | X         | X     |
+
+    * 출처 : https://velog.io/@hangem422/js-es6-function
+
+* 화살표 함수와 this
+
+  * function 선언 함수와, 메서드와 가장 "두드러지는" 특징은 this의 바인딩 차이이다
+
+    * 화살표 함수 내부의 this는 정적 바인딩이다. (즉, 호출된 위치와 상관없이 무조건 화살표 함수 선언 위치의 가장 근접한 상위 스코프에 바인딩 된다.)
+
+    * 아래의 코드를 통해 알아보자
+
+      ```javascript
+      const obj = {
+        x: 1,
+        y: 2,
+      
+        func1: function () {
+          console.log('1.', this);
+        },
+        func2 () {
+          console.log('2.', this);
+        },
+        func3: () => {
+          console.log('3.', this);
+        }
+      }
+      
+      // this가 해당 객체를 가리킴
+      obj.func1();
+      obj.func2();
+      
+      // 💡 this가 상위 스코프를 가리킴 => 여기서는 Window 객체가 될 것이다.
+      obj.func3(); 
+      ```
+
+      ```javascript
+      const outer = {
+        a: true,
+        b: false,
+      
+        func: function () {
+          const inner = {
+            x: 1,
+            y: 2,
+      
+            func1: function () {
+              console.log('1.', this);
+            },
+            func2 () {
+              console.log('2.', this);
+            },
+            func3: () => {
+              console.log('3.', this);
+            }
+          }
+      
+          // this가 inner를 가리킴 
+          inner.func1();
+          inner.func2();
+      
+          // this가 outer를 가리킴
+          inner.func3();
+        }
+      }
+      
+      outer.func();
+      ```
+
+    * 생성자 함수 내에서, function 선언 함수와 화살표 함수를 선언해서 차이를 알아보자.
+
+      ```javascript
+      function Korean () {
+        this.favorite = '김치';
+      
+        this.makeStew = function (isHot) {
+          return `${isHot ? '매운' : '순한'} ${this.favorite}찌개`;
+        };
+        this.fryRice = (isHot) => {
+          return `${isHot ? '매운' : '순한'} ${this.favorite}볶음밥`;
+        };
+      }
+      
+      function Italian () {
+        this.favorite = '피자';
+      }
+      
+      const korean = new Korean();
+      const italian = new Italian();
+      
+      console.log(korean.makeStew(true)); //매운 김치찌개
+      console.log(korean.fryRice(true)); //매운 김치볶음밥
+      
+      italian.makeStew = korean.makeStew;
+      italian.fryRice = korean.fryRice;
+      
+      //this의 동적 바인딩과 정적 바인딩 차이를 알 수 있다.
+      console.log(italian.makeStew(false)); //순한 피자찌개
+      console.log(italian.fryRice(false)); //순한 김치볶음밥
+      ```
+
+    * 클래스의 경우에도 마찬가지이다.
+
+      ```javascript
+      // ♻️ 새로고침 후 실행
+      class Korean {
+        constructor () {
+          this.favorite = '김치';
+          this.fryRice = (isHot) => {
+            return `${isHot ? '매운' : '순한'} ${this.favorite}볶음밥`;
+          }
+        }
+        makeStew (isHot) {
+          return `${isHot ? '매운' : '순한'} ${this.favorite}찌개`;
+        }
+      }
+      
+      class Italian {
+        constructor () {
+          this.favorite = '피자';
+        }
+      }
+      
+      const korean = new Korean();
+      const italian = new Italian();
+      
+      console.log(korean.makeStew(true)); //매운 김치찌개
+      console.log(korean.fryRice(true)); //매운 김치볶음밥
+      
+      
+      
+      italian.makeStew = korean.makeStew;
+      italian.fryRice = korean.fryRice;
+      
+      //this의 동적 바인딩과 정적 바인딩의 차이가 잘 드러난다.
+      console.log(italian.makeStew(false)); //순한 피자찌개
+      console.log(italian.fryRice(false)); //순한 김치볶음밥
+      ```
+
+  * 화살표 함수는 this에 대해 정적 바인딩을 하므로, call이나 apply나 bind 함수의 this 인자는 무시된다. 
+
+    ```javascript
+    // ♻️ 새로고침 후 실행
+    class Korean {
+      constructor () {
+        this.favorite = '김치';
+        this.fryRice = (isHot) => {
+          return `${isHot ? '매운' : '순한'} ${this.favorite}볶음밥`;
+        }
+      }
+      makeStew (isHot) {
+        return `${isHot ? '매운' : '순한'} ${this.favorite}찌개`;
+      }
+    }
+    
+    const korean = new Korean();
+    
+    console.log(
+      korean.fryRice.call({favorite: '된장'}, true)
+    );
+    console.log(
+      korean.fryRice.apply({favorite: '된장'}, [true])
+    );
+    console.log(
+      korean.fryRice.bind({favorite: '된장'}, true)()
+    );
+    //매운 김치볶음밥
+    //매운 김치볶음밥
+    //매운 김치볶음밥
+    ```
+
+* node.js 파일을 실행 시, this 관련한 정보가 다소 다르게 나타난다.
+
+  * node.js는 각 파일을 모듈로 만들어서 실행한다
+
+  * 파일 내 모든 코드는, 모듈의 메서드 안으로 들어가서 실행된다.
+
+    ```javascript
+    // this가 모듈 객체(현재 비어있음)를 가리킴
+    console.log('0.', this);
+    
+    function func1 () {
+      // this가 전역 객체를 가리킴
+      console.log('1.', this);
+    }
+    
+    function func2 () {
+      'use strict';
+      
+      // this가 undefined를 가리킴
+      console.log('2.', this);
+    }
+    
+    const func3 = () => {
+      // 💡 this가 모듈 객체(이 함수의 상위 스코프)를 가리킴
+      console.log('3.', this);
+    }
+    
+    
+    //0. {}
+    func1(); // 1. <ref *1> Object [global]
+    func2(); // 2. undefined
+    func3(); // 3. {}
+    ```
+
+  * vscode로 node.js 실행 시 참고한 사이트
+
+    * https://bitkunst.tistory.com/entry/Nodejs-%EC%8B%A4%ED%96%89%ED%95%98%EA%B8%B0-with-Visual-Studio-Code
+
+
+
+## 프로토타입
+
+### 프로토타입의 개념
+
+* 자바스크립트에서, 모든 객체는 prototype을 가진다
+
+  * 여기서, 최상위 prototype은 Object.prototype임을 유추할 수 있다.
+
+    * 때문에, 아래의 빈 객체에서 함수를 호출할 수 있는 이유도 여기에 있다.
+
+      ```javascript
+      console.log(
+        obj.toString()
+      );
+      
+      console.log(
+        obj.valueOf()
+      );
+      ```
+
+* prototype을 활용하여, prototype chain을 활용할 수 있다.
+
+  * 즉, 특정 객체에 호출된 프로퍼티가 없다면, 해당 객체의 프로토타입에서 찾는다
+
+  * 예를 들면, Array 생성자 함수로 만들어진 객체에는, valueOf() 함수가 정의되어 있지 않지만, [[prototype]]에는 (즉, Object의 prototype) valueOf() 함수가 정의되어 있으므로, array.valueOf() 가 가능하다
+
+    * Array.prototype에서 valueOf()를 재정의하여 사용할 수 있다
+
+      => 이처럼 prototype chain을 이용하여 함수를 재정의할 수 있다.
+
+
+
+
+
+* 코드로 프로토타입에 접근하기
+
+  * `__proto__ ` 접근자 사용해서 접근할 수 있으나, 권장되지 않는다.
+
+    * 아래의 방식으로 접근할 것이다. (Object.getPrototypeOf({}))
+
+      ```javascript
+      console.log(
+        Object.getPrototypeOf({})
+      );
+      ```
+
+    * 생성자 함수에서는 prototype에 접근 가능하며, 접근이 안 되는 함수는 생성자 함수로 동작하지 않는다고 얘기할 수 있다.
+
+      ```javascript
+      function Person (name) {
+        this.name = name;
+      }
+      
+      // 인스턴스들에 공유될 프로토타입에 다음과 같이 접근
+      console.log(Person.prototype);
+      
+      //생성자 함수로 동작하는 Set 함수
+      console.log(
+        Set.prototype
+      );
+      
+      // 생성자 함수로 동작하지 않는 빌트인 객체
+      console.log(
+        Math.prototype
+      ); //undefined
+      ```
+
+      
+
+* prototype 사용 예시
+
+  * class 내에 함수를 정의하면, 기본적으로 prototype의 프로퍼티로 정의가 된다.  => 그렇게 하지 않고, Dog의 prototype에 직접 접근하여 정의해도 된다. 
+
+    ```javascript
+    class Dog {
+      constructor (name) {
+        this.name = name;
+      }
+    }
+    
+    Dog.prototype.sound = '멍멍';
+    Dog.prototype.bark = function () { // 메서드로 만드는 것과 같음
+      console.log(this.sound)
+    };
+    
+    const badugi = new Dog('바둑이');
+    
+    badugi.bark(); //prototype에 정의된 bark() 가 호출된다. 
+    ```
+
+  * 결국, 여러 개 객체를 생성 시, 모든 객체는 공통된 기능을 수행하므로, 해당 기능을 구현하는 코드(= 함수)는, 각 객체가 공유하게끔 하면 메모리가 절약된다.
+
+    => 즉, 객체의 생성자 함수의 prototype에 함수를 정의하는 것이 효율적이다!
+
+    * 특정 객체는 다른 기능을 수행하게끔 하고 싶다면, 해당 객체의 "인스턴스 레벨"에서 함수를 재정의하면 될 것이다.
+
+      => 이는 prototype chain의 특성을 활용한 것이다. 
+
+    ```javascript
+    function YalcoChicken (name, no) {
+      this.name = name;
+      this.no = no;
+    }
+    
+    // 공통된 요소들은 프로토타입 프로퍼티로
+    YalcoChicken.prototype.titleEng = 'YalcoChicken';
+    
+    YalcoChicken.prototype.introduce = function () {
+      return `안녕하세요, ${this.no}호 ${this.name}점입니다!`;
+    }
+    
+    YalcoChicken.prototype.introEng = function () {
+      return `Welcome to ${this.titleEng} at ${this.name}!`;
+    };
+    
+    const chain1 = new YalcoChicken('판교', 3);
+    const chain2 = new YalcoChicken('강남', 17);
+    const chain3 = new YalcoChicken('제주', 24);
+    
+    console.log(chain1.introduce());
+    console.log(chain1.introEng());
+    
+    //chain4는 introduce()를 재정의 (즉, 인스턴스 레벨에서 덮어씌움.)
+    const chain4 = new YalcoChicken('평양', 456);
+    chain4.introduce = function () {
+      return `어서오시라요, ${this.no}호 ${this.name}점입네다!`;
+    }
+    
+    console.log(chain4.introduce());
+    ```
+
+    
+
+### 프로토타입과 상속
+
+* 프로토타입으로 상속하기
+
+  * `Object.create(Function.prototype)` 을 활용하여 프로토타입을 상속한다
+
+    * 아래의 코드를 통해 성질을 알아보자.
+
+      ```javascript
+      function Parent() {};
+      function Child() {};
+      
+      console.log(Parent.prototype);
+      console.log(Child.prototype);
+      
+      //{constructor: ƒ}
+      //	constructor: ƒ Parent()
+      //	[[Prototype]]: Object
+      
+      //{constructor: ƒ}
+      //	constructor: ƒ Child()
+      //	[[Prototype]]: Object
+      
+      console.log("===============");
+      
+      
+      let v = Object.create(Parent.prototype); //빈 객체를 생성하며, v의 prototype에 접근하게 되면 이것이 Parent.prototype과 완전히 유사하다.
+      
+      console.log(v);
+      console.log(Object.getPrototypeOf(v) === Parent.prototype);
+      
+      
+      //Parent {}
+      //	[[Prototype]]: Object
+      //		constructor: ƒ Parent()
+      //		[[Prototype]]: Object
+      
+      //true
+      
+      console.log("===================");
+      
+      console.log("아래의 과정을 통해, prototype으로 상속이 이루어짐을 알 수 있다");
+      Child.prototype = v; //Child.prototype = Object.create(Parent.prototype); 과 동일
+      ```
+
+    * 즉, Child와 Parent 생성자 함수의 prototype은 서로 다른 객체이다
+
+      => Object.getPrototypeOf(Child.prototype) 을 적용해야, 비로소 Parent.prototype과 동일하다
+
+  * 아래의 예시를 통해 확인할 수 있다.
+
+    ```javascript
+    function Bird (name, sound) {
+      this.name = name;
+      this.sound = sound;
+    }
+    Bird.prototype.fly = function () {
+      console.log(`${this.name} ${this.sound} 비행중`);
+    }
+    
+    function Eagle (name, sound, prey) {
+      this.name = name;
+      this.sound = sound;
+      this.prey = prey;
+    }
+    
+    // ⚠️ 순서 주의! 상속을 먼저 받음
+    Eagle.prototype = Object.create(Bird.prototype);
+    // Eagle.prototype = Bird.prototype; // 💡 비교해 볼 것 => 이 경우는 Eagle의 prototype과 Bird의 prototype이 완전히 동일시되어, Eagle prototype만의 프로퍼티를 재정의할 수 없게 된다.
+    
+    // 상속 이후 자신의 프로토타입 작성
+    Eagle.prototype.hunt = function () {
+      console.log(`${this.name} ${this.prey} 사냥중`);
+    }
+    
+    
+    
+    const bird = new Bird('새돌이', '파닥파닥');
+    const eagle = new Eagle('독돌이', '푸드덕', '토끼');
+    
+    // 상속 구조 확인
+    console.log(bird);
+    console.log(eagle);
+    
+    console.log(
+      eagle instanceof Bird,
+      bird instanceof Eagle
+    );
+    //true false
+    
+    bird.fly();
+    eagle.fly();
+    eagle.hunt();
+    //새돌이 파닥파닥 비행중
+    //독돌이 푸드덕 비행중
+    //독돌이 토끼 사냥중
+    ```
+
+    
+
+* 부모의 생성자를 활용해서, 상속할 수 있다
+
+  * 부모의 생성자의 코드 중, 자식의 생성자의 코드와 중복된다면, 상속을 활용하여 코드를 줄일 수 있다
+
+  * 이 때, 자식 함수에서 부모의 생성자 함수를 호출하므로, this의 주체를 명확히 하기 위해 call 함수를 활용한다.
+
+    ```javascript
+    function Bird (name, sound) {
+      this.name = name;
+      this.sound = sound;
+    }
+    Bird.prototype.fly = function () {
+      console.log(`${this.name} ${this.sound} 비행중`);
+    }
+    
+    function Eagle (name, sound, prey) {
+      // 💡 call 호출방식 사용
+      Bird.call(this, name, sound);
+      this.prey = prey
+    }
+    
+    Eagle.prototype = Object.create(Bird.prototype);
+    
+    Eagle.prototype.hunt = function () {
+      console.log(`${this.name} ${this.prey} 사냥중`);
+    }
+    
+    const eagle = new Eagle('독돌이', '푸드덕', '토끼');
+    console.log(eagle);
+    
+    eagle.fly();
+    eagle.hunt();
+    //독돌이 푸드덕 비행중
+    //독돌이 토끼 사냥중
+    ```
+
+* 클래스로도 상속을 구현할 수 있다
+
+  * 본질적으로, 프로토타입 기반으로 구현되어 있다.
+
+    * 때문에, 클래스 내에서 메서드로서 함수가 정의되어 있다면, 이는 자동으로 클래스의 prototype에 속하게 된다.
+
+      (메서드 이외 다른 형태로 정의되어 있다면, "인스턴스 레벨에서" 함수의 프로퍼티가 정의된다.)
+
+  * super키워드와  extends를 활용한다.
+
+  * 아래의 예시는, 인스턴스 레벨에 속하는지, 프로토타입에 속하는지를 보여준다.
+
+    ```javascript
+    function AAA () {
+      this.field = 1;
+      this.run = function () { return 1; };
+    }
+    
+    class BBB {
+      field = 1;
+      run = function () { return 1; }
+    }
+    
+    class CCC {
+      field = 1;
+      run () { return 1; }
+    }
+    
+    console.log(new AAA()); // 인스턴스에 속함
+    console.log(new BBB()); // 인스턴스에 속함
+    console.log(new CCC()); // 프로토타입에 속함
+    
+    
+    //AAA {field: 1, run: ƒ}
+    //BBB {field: 1, run: ƒ}
+    //CCC {field: 1}
+    ```
+
+  * extends와 super를 활용해서 상속하는 코드는 아래와 같다
+
+    * 이 때, extends 를 사용하게 되면, `Eagle.prototype = Object.create(Bird.prototype)` 의 효과가 발생하게 된다.
+
+      ```javascript
+      // ♻️ 새로고침 후 실행
+      
+      class Bird {
+        constructor (name, sound) {
+          this.name = name;
+          this.sound = sound;
+        }
+        fly () {
+          console.log(`${this.name} ${this.sound} 비행중`);
+        }
+      }
+      
+      class Eagle extends Bird {
+        constructor (name, sound, prey) {
+          super(name, sound);
+          this.prey = prey;
+        }
+        hunt () {
+          console.log(`${this.name} ${this.prey} 사냥중`);
+        }
+      }
+      
+      const bird = new Bird('새돌이', '파닥파닥');
+      const eagle = new Eagle('독돌이', '푸드덕', '토끼');
+      
+      console.log(bird);
+      console.log(eagle);
+      //Bird {name: '새돌이', sound: '파닥파닥'}
+      
+      //Eagle {name: '독돌이', sound: '푸드덕', prey: '토끼'}
+      //	name: "독돌이"
+      //	prey: "토끼"
+      //	sound: "푸드덕"
+      //	[[Prototype]]: Bird
+      //		constructor: class Eagle
+      //		hunt: ƒ hunt()
+      //		[[Prototype]]: Object
+      //			constructor: class Bird
+      //			fly: ƒ fly()
+      //			[[Prototype]]: Object
+      
+      
+      bird.fly();
+      eagle.fly(); //프로토타입 체인을 활용하여, 최종적으로 Bird.prototype 내의 fly() 함수를 호출하게 된다.
+      eagle.hunt();
+      
+      //새들이 파닥파닥 비행중
+      //독돌이 푸드덕 비행중
+      //독돌이 토끼 사냥중
+      ```
+
+      
+
+* Object.assign()을 활용하여 아래 종류의 상속이 가능하다.
+
+  * 일반적으로, 위에서 배운 상속은 1개의 부모로부터 상속받음
+
+  * 그러나, Object.assign(Function.prototype, 객체1, 객체2...) 를 통해서 인자를 받은 객체의 프로퍼티(데이터 프로퍼티, 함수 프로퍼티 모두 가능)를 모두 Function.prototype의 프로퍼티로 정의하게 된다.
+
+    ```javascript
+    const runner = {
+      run : function () {
+        console.log(`${this.name} 질주중`);
+      }
+    }
+    const swimmer = {
+      swim: function () {
+        console.log(`${this.name} 수영중`);
+      }
+    }
+    const flyer = {
+      fly: function () {
+        console.log(`${this.name} 비행중`);
+      }
+    }
+    const hunter = {
+      hunt: function () {
+        console.log(`${this.name} 사냥중`);
+      }
+    }
+    
+    
+    
+    class Owl {
+      constructor (name) {
+        this.name = name;
+      }
+    }
+    
+    class FlyingFish {
+      constructor (name) {
+        this.name = name;
+      }
+    }
+    
+    class PolarBear {
+      constructor (name) {
+        this.name = name;
+      }
+    }
+    
+    //Function.prototype에 프로퍼티 설정
+    Object.assign(Owl.prototype, flyer, hunter);
+    Object.assign(FlyingFish.prototype, flyer, swimmer);
+    Object.assign(PolarBear.prototype, runner, swimmer, hunter);
+    
+    //각 객체의 프로토타입 체인 확인
+    const owl = new Owl('붱돌이');
+    const f_fish = new FlyingFish('날치기');
+    const p_bear = new PolarBear('극곰이');
+    
+    console.log(owl);
+    console.log(f_fish);
+    console.log(p_bear);
+    
+    //Owl {name: '붱돌이'}
+    //	name: "붱돌이"
+    //	[[Prototype]]: Object
+    //		fly: ƒ ()
+    //		hunt: ƒ ()
+    //		constructor: class Owl
+    //		[[Prototype]]: Object
+    
+    //FlyingFish {name: '날치기'}
+    //	name: "날치기"
+    //	[[Prototype]]: Object
+    //		fly: ƒ ()
+    //		swim: ƒ ()
+    //		constructor: class FlyingFish
+    //		[[Prototype]]: Object
+    
+    //...
+    
+    ```
+
+    
+
+    
+
+### 비동기의 개념과 타임아웃
+
+비동기 프로그래밍은 아래와 같이 진행된다.
+
+* 자바스크립트 코드는 단일 스레드로 실행 (즉, 동기적으로 실행된다)
+
+  * 이 때, 자바스크립트 실행 환경은 멀티 스레드로 실행된다.
+
+    => 그래서, 비동기 작업은 실행환경으로 넘겨지고, 계속 자바스크립트 코드는 실행된다.,
+
+  * 실행이 끝난 비동기 작업은, 태스크 큐로 보내진다.
+
+    => js코드가 모두 실행이 끝난 후에야, 태스크 큐에 있던 비동기 작업이 다시, 자바스크립트 코드로서 실행되게 된다.
+
+    => 이 과정은 "이벤트 루프"에 의해서 행해진다.
+
+
+
+### 프로미스
+
+//setTimeOut()의 반환값으로 TIMEOUTid 값이 반환된다는데... 솔직히 잘 모르겠다.
+
+
+
+//콜백함수로 작성한 이유는, 이전 콜백함수의 결과값을 활용해야 할 때 활용한다.
+
+//확인해보니, nextFunc는 비동기함수가 아니므로, 실행될 때, nextFunc의 호출이 다 끝나고 나서야 다음 코드가 실행됨
+
+```javascript
+const DEADLINE = 1400;
+
+function relayRun (name, start, nextFunc, failMsg) {
+  console.log(`👟 ${name} 출발`);
+  const time = 1000 + Math.random() * 500;
+  for(let j=0; j<20; j++) {console.log("prvprvprvprvprv");}
+
+  setTimeout(() => {
+    if (time < DEADLINE) {
+      console.log(`🚩 ${name} 도착 - ${(start + time)/1000}초`);
+      nextFunc?.(start + time);
+      for(let i=0; i<8; i++){console.log("testtesttesttest");}  //여기는, nextFunc()의 호출이 끝나고 나서야 비로소 실행된다.    
+    } else {
+      console.log(failMsg);
+      console.log(`😢 완주 실패 - ${(start + time)/1000}초`);
+    }
+
+    if (time >= DEADLINE || !nextFunc) {
+      console.log('- - 경기 종료 - -');
+    }
+  }, time);
+}
+
+
+```
+
+
+
+//Promise 관련
+
+resolve는 콜백함수를 받음
+
+//promise 객체가 생성될 때, 내부의 코드를 모두 실행한 후 객체가 생성되는 듯 하다.
+
+//resolve는 2번이상 넣어도 무시되는 듯 하다.
+
+//resolve 콜백함수는 항상 비동기 식으로 맨 나중에 실행된다는 사실을 관찰(setTimeOut 제거해도 마찬가지)
+
+//우선, Promise 객체 내에 정의되어 있는 콜백함수를 우선적으로 실행한다. (동기적)
+
+
+
+//then 의 결과로 나오는 프로미스는, 자기 자신이 아닌 또다른 프로미스 객체
+
+//PromiseResult에서 값을 저장
+
+//promise.then() 시행이 비동기시행인 듯 하다. (그래야 논리적으로도 맞다고 생각한다. => resolve에 대한 콜백함수를 받아야만 시행이 되기 때문)
+
+=> 실제로, then()을 실행하기 전에 이미, resolve() 를 제외한 모든 프로미스 내부 코드가 실행이 되며, then()을 실행할 떄, 넘겨받은 콜백함수를 근거로 resolve()를 마저 시행한다.
+
+```javascript
+const borrow = 20;
+
+const payWith10perc = new Promise((resolve, reject) => {
+  //비동기코드
+  resolve(borrow * 1.1);
+});
+
+console.log(22222);
+
+// ⚠️ 콘솔에서 분리해서 실행하면 안 됨!
+// 프로미스가 생성되는 순간부터 시간 경과
+payWith10perc
+.then(result => {
+  console.log(result + '만원');
+});
+for(let i=0; i<5000; i++) {console.log(1000000);}
+
+//22222
+//(5000)1000000
+//22만원
+```
+
+
+
+//promise.then()하고나서, reject 함수가 시행되었는데 catch나 reject 콜백함수 전달 안 되어 있으면 에러 뜬다
+
+=> 이는, promise.then()을 시행 도중, 에러가 뜰 때 "즉각적으로" 새로운 promise 객체가 반환되면서 catch() 함수가 실행된다고 한다. 
+
+(출처 : https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise/catch)
+
+//아래를 보면 알 수 있듯이, promise 객체 생성 시, 코드 내부에 에러가 뜬다고 해서 즉시 에러가 뜨는 것이 아니라, 일단 javascript의 메인 코드를 다 실행하고 난 후, catch() 메서드가 보이지 않는다면 그 때서야 에러가 뜸을 확인할 수 있다. 
+
+예시 코드)
+
+```
+
+```
+
+
+
+//아래 2개의 코드는 상당한 차이가 있다. 
+
+* 우선 함수 정의 코드는 2개 모두 공통
+
+```javascript
+const DEADLINE = 1400;
+
+function getRelayPromise (name, start, failMsg) {
+  console.log(`👟 ${name} 출발`);
+
+  // 💡 랜덤 시간만큼 달리고 결과를 반환하겠다는 약속을 만들어 반환
+  return new Promise((resolve, reject) => {
+    const time = 1000 + Math.random() * 500;
+
+    setTimeout(() => {
+      if (time < DEADLINE) {
+        console.log(`🚩 ${name} 도착 - ${(start + time)/1000}초`);
+        resolve(start + time);
+      } else {
+        
+        console.log(failMsg);
+        reject((start + time) / 1000);
+      }
+    }, time);
+  })
+}
+```
+
+* 아래 3가지 경우로 실행하면, 전혀 다른 결과를 가져오게 된다.
+
+  * 아래의 경우는, then 함수의 콜백 함수 인자가 promise 객체를 반환받는다.
+
+    => 이 때, then 함수가 반환하는 promise 객체는, 위의 콜백 함수 인자가 반환하는 promise 객체와 상태가 같아진다고 한다. (내 생각)
+
+    => 그리고, then()을 시행하기 이전에는, resolve()를 제외한 모든 promise 내부 코드가 시행된다. (비동기 코드까지도)
+
+    => 그리고, then()을 시행한다면, 넘겨받은 콜백함수를 근거로 resolve()만 시행이 된다는 것을 확인한다. (이 과정까지 해서, promise.then() 의 promise 객체 내부의 모든 코드가 비로소 시행이 완료가 된다고 말할 수 있다.)
+
+  ```javascript
+  getRelayPromise('철수', 0, '철수부터 광탈입니다. ㅠㅠ')
+  .then(result => {
+    return getRelayPromise('영희', result, '영희가 완주하지 못했네요.');
+  })
+  .then(result => {
+    return getRelayPromise('돌준', result, '돌준이 분발해라.');
+  })
+  .then(result => {
+    return getRelayPromise('정아', result, '정아에게 무리였나보네요.');
+  })
+  .then(result => {
+    return getRelayPromise('길돈', result, '아아, 아깝습니다...');
+  })
+  .catch(msg => {
+    console.log(`😢 완주 실패 - ${msg}초`);
+  })
+  .finally(() => {
+    console.log('- - 경기 종료 - -');
+  });
+  ```
+
+  * 아래의 코드는, 위 코드와 동일한 원리로 동작한다
+    * then 함수 인자의 콜백함수에서, 함수의 실행 부분 몸체 `{}`를 작성하지 않고, return 역시 명시하지 않는다면, 자동으로 promise chain에서 다음 then 블록으로 값을 전달한다.
+
+  ```javascript
+  getRelayPromise('철수', 0, '철수부터 광탈입니다. ㅠㅠ')
+  .then(result =>getRelayPromise('영희', result, '영희가 완주하지 못했네요.'))
+  .then(result => getRelayPromise('돌준', result, '돌준이 분발해라.'))
+  .then(result => getRelayPromise('정아', result, '정아에게 무리였나보네요.'))
+  .then(result => getRelayPromise('길돈', result, '아아, 아깝습니다...'))
+  .catch(msg => {
+    console.log(`😢 완주 실패 - ${msg}초`);
+  })
+  .finally(() => {
+    console.log('- - 경기 종료 - -');
+  });
+  ```
+
+  * 아래의 코드는, 위 2개의 코드랑 완전히 다르게 작동한다.
+    * then 함수 인자의 콜백함수는 최종적으로 undefined를 반환한다.
+    * 때문에, 우리가 원하는대로 promise chain이 동작하지 않는다.
+
+  ```javascript
+  getRelayPromise('철수', 0, '철수부터 광탈입니다. ㅠㅠ')
+  .then(result => {getRelayPromise('영희', result, '영희가 완주하지 못했네요.')}) //(*)
+  .then(result => {getRelayPromise('돌준', result, '돌준이 분발해라.')})
+  .then(result => {getRelayPromise('정아', result, '정아에게 무리였나보네요.')})
+  .then(result => {getRelayPromise('길돈', result, '아아, 아깝습니다...')})
+  .catch(msg => {
+    console.log(`😢 완주 실패 - ${msg}초`);
+  })
+  .finally(() => {
+    console.log('- - 경기 종료 - -');
+  });
+  ```
+
+  => (*) 부분에서, then 이 반환하는 promise 객체가 값을 전달받지 못하면서, promise chain 동작의 오류가 발생한다. (내 생각) promise 객체 자체가, 어떠한 값을 제대로 전달받지 못하면, promise chain 동작이 순차적으로 발생하지 않도록 설계된듯 하다.
+
+  * 참고
+    * https://triplexblog.kr/138
+    * https://velog.io/@eunjin/Javascript-Promise-Chaining-%ED%94%84%EB%A1%9C%EB%AF%B8%EC%8A%A4-%EC%B2%B4%EC%9D%B8-%EC%93%B0%EB%8A%94-%EC%9D%B4%EC%9C%A0
+
+
+
+### 프로미스의 병렬 진행
+
+아래의 경우, 일단 javascript의 코드가 다 실행되고 난 후에, ~~promise 내부 코드가 비동기적으로 실행된다.~~
+
+=> javascript 코드가 실행되는 과정에서, promise 내부코드도 (동기적으로) 함께 시행된다.
+
+=> 다만, promise 내부 코드에 비동기 코드가 존재하는 경우에는, javascript의 코드가 다 실행되고 난 이후에 promise 내부 코드가 실행된다.
+
+```javascript
+// 다섯 주자들이 동시에 질주
+// 데드라인(밀리초) 안에 들어오지 못하면 탈락
+let DEADLINE = 1450;
+
+function getRunPromise (name) {
+  return new Promise((resolve, reject) => {
+    const time = 1000 + Math.random() * 500;
+
+    setTimeout(() => {
+      if (time < DEADLINE) {
+        console.log(`🚩 ${name} 도착 - ${(time)/1000}초`);
+        resolve({name, time});
+
+      } else {
+        reject((`${name} 시간초과`));
+      }
+    }, time);
+  });
+}
+
+console.log("prv");
+console.log(
+  '철수,영희,돌준,정아,길돈'
+  .split(',')
+  .map(getRunPromise)
+);
+console.log("aft");
+
+//prv
+//[Promise 객체, Promise 객체, Promise 객체, Promise 객체, Promise 객체]
+//aft
+
+//	*(이제 Promise 객체 내부의 비동기 코드 실행) => 무작위로 실행된다.
+
+//🚩 철수 도착 - 1.0340770288730459초
+//🚩 정아 도착 - 1.090304709290944초
+//🚩 돌준 도착 - 1.1644156953212312초
+//🚩 길돈 도착 - 1.2597545978902094초
+//🚩 영희 도착 - 1.1644156953212312초
+```
+
+Promise의 경우는 아래의 정적 메서드가 존재한다.
+
+* 주어진 상황은 아래와 같다
+
+  ```javascript
+  let DEADLINE = 1450;
+  
+  function getRunPromise (name) {
+    return new Promise((resolve, reject) => {
+      const time = 1000 + Math.random() * 500;
+  
+      setTimeout(() => {
+        if (time < DEADLINE) {
+          console.log(`🚩 ${name} 도착 - ${(time)/1000}초`);
+          resolve({name, time});
+  
+        } else {
+          reject((`${name} 시간초과`));
+        }
+      }, time);
+    });
+  }
+  ```
+
+  * all
+
+    * 프로미스의 배열을 받아서, 최종적으로 프로미스의 resolve된 값을 인자로 받아서 배열로 만들어 반환
+
+      * 이는 모두 성공한 경우에 한함. 
+
+        => 하나라도 프로미스 내부 코드 실행 과정에서 reject되는 과정이 있다면, catch 과정으로 넘어감
+
+      * 아래 코드의 경우에는, Promise.all()은 프로미스 객체를 받고, 내부적으로는 배열을 최종적으로 받는다
+
+        * 해당 배열의 요소는 {name, time} 의 객체이다.
+
+    ```javascript
+    // 한 명이라도 탈락하면 전체 탈락
+    Promise.all(
+      '철수,영희,돌준,정아,길돈'
+      .split(',')
+      .map(getRunPromise)
+    )
+    .then(console.log)
+    .catch(console.error)
+    .finally(() => {
+      console.log('- - 경기 종료 - -');
+    });
+    
+    //Promise.all() 은, 프로미스 객체를 반환하며, 이 객체의 promise 객체 내부에는 아래의 배열이 존재하게 된다.
+    // [resolve된 객체, resolve된 객체, resolve된 객체, resolve된 객체, resolve 된 객체]를 반환하게 된다.
+    
+    //then() 메서드에서, 프로미스 객체의 PromiseResult 슬롯의 값을 활용한다.
+    ```
+
+    * 응용
+      * 5명 모두 DEADLINE 통과 시, 상위 3명만 표시
+
+    ```javascript
+    // 성공시 탑3 표시
+    Promise.all(
+      '철수,영희,돌준,정아,길돈'
+      .split(',')
+      .map(getRunPromise)
+    )
+    .then(arr => {
+      return arr.sort((a, b) => {
+        return a.time - b.time
+      })
+      .map(({name}) => name)
+      .splice(0, 3) //3개까지 잘라서 표현하며, 배열이 호출하는 함수로서 결과도 배열로 반환된다.
+      .join(', ');
+    }) //상위 3명의 이름이 문자열로 찍힌 값이, promise 객체의 PromiseResult 슬롯에 담긴다.
+    .then(top3 => {
+      console.log(`탑3: ${top3}`);
+    }) //여기서부터는, promise 객체의 내부 값이 필요없으므로, return을 명시하지 않은 것으로 파악된다. 
+    .catch(console.error)
+    .finally(() => {
+      console.log('- - 경기 종료 - -');
+    });
+    
+    
+    ```
+
+  * allSettled
+
+    * resolve가 실행되든, reject가 되든 then()을 실행한다.
+      * resolve가 실행되면, status 프로퍼티와 value 프로퍼티를 가진다
+        * value 프로퍼티에는,  resolve에서 넘겨받은 이유가 담긴다
+
+      * reject가 실행되면, status 프로퍼티와 reason 프로퍼티를 가진다.
+        * reason 프로퍼티에는, reject 메세지 인자가 넘어온다.
+
+
+    ```javascript
+  Promise.allSettled(
+    '철수,영희,돌준,정아,길돈'
+    .split(',')
+    .map(getRunPromise)
+  )
+  .then(console.log)
+  // ⚠️ catch는 동작하지 않음
+  .finally(() => {
+    console.log('- - 경기 종료 - -');
+  });
+
+
+  //결과물
+  //[{…}, {…}, {…}, {…}, {…}]
+  //0: {status: 'fulfilled', value: {…}} 
+  	//value: {name: '철수', time: 1188.5151482323533}
+  //1: {status: 'fulfilled', value: {…}}
+  //2: {status: 'rejected', reason: '돌준 시간초과'}    //reject된 결과물
+  //3: {status: 'fulfilled', value: {…}}
+  //4: {status: 'fulfilled', value: {…}}
+    ```
+
+    ```javascript
+  //따라서, 아래처럼, 성공한 사람의 경우와 실패한 사람의 경우를 나눠서 데이터를 다룰 수 있다.
+
+  Promise.allSettled(
+    '철수,영희,돌준,정아,길돈'
+    .split(',')
+    .map(getRunPromise)
+  )
+  .then(arr => {
+    return {
+      succ: arr.filter(result => {
+        return result.status === 'fulfilled'
+      }),
+      fail: arr.filter(result => {
+        return result.status === 'rejected'
+      })
+    }
+  })
+  .then(res => {
+    res.succ.sort((a, b) => {
+      return a.value.time - b.value.time;
+    });
+    console.log(
+      `완주: ${res.succ.length}명 (1등: ${res.succ[0].value.name})`
+    );
+    console.log(
+      `탈락: ${res.fail.length}명`
+    );
+  })
+
+  .finally(() => {
+    console.log('- - 경기 종료 - -');
+  });
+    ```
+
+  * any
+
+    * 가장 먼저 성공한 프로미스의 결과를 then 으로 반환
+      * 이 때, 실험 결과, 개발자가 입력한 프로미스의 순서가 아니라, 서버가 (멀티 스레드로) 무작위로 처리한 프로미스 중, 가장 첫번째로 성공한 프로미스의 결과를 출력함을 알 수 있다.
+      * (내 개인적인 생각) 어디에다가 사용할 수 있을까?
+
+    ```javascript
+    DEADLINE = 1050;
+    
+    Promise.any(
+      '철수,영희,돌준,정아,길돈'
+      .split(',')
+      .map(getRunPromise)
+    )
+    .then(console.log)
+    // ⚠️ 모두 실패해도 catch는 동작하지 않음
+    .finally(() => {
+      console.log('- - 경기 종료 - -');
+    });
+    
+    
+    //🚩 돌준 도착 - 1.0322985546617611초
+    //{name: '돌준', time: 1032.298554661761}
+    // - - 경기 종료 - -
+    // 🚩 길돈 도착 - 1.1631042733434747초
+    // 🚩 철수 도착 - 1.2487807030668345초
+    // 🚩 정아 도착 - 1.3200488190607453초
+    // 🚩 영희 도착 - 1.3673388376741022초
+    ```
+
+    => 위에서, 길돈 도착 부터는, 비동기 처리로 인한 결과물이며, resolve()는 실행되지 않음을 알 수 있다.
+
+  * race
+
+    * 성공, 실패에 관계없이 가장 첫번째 결과물을 반환
+      * then() 또는 catch() 로 반환한다.
+
+    ```javascript
+    // 다섯 주자들이 선택한 도착지로 질주
+    // 도착지에 '꽝'이 있으면(50% 확률) 실패
+    function getBombRunPromise (name) {
+      return new Promise((resolve, reject) => {
+        const time = 1000 + Math.random() * 500;
+    
+        setTimeout(() => {
+          console.log(`🚩 ${name} 도착 - ${(time)/1000}초`);
+          if (Math.random() < 0.5) {
+            resolve((`🙌 ${name} 승리!`));
+          } else {
+            
+            reject((`💣 ${name} 꽝!`));
+          }
+        }, time);
+      });
+    }
+    
+    Promise.race(
+      '철수,영희,돌준,정아,길돈'
+      .split(',')
+      .map(getBombRunPromise)
+    )
+    .then(console.log)
+    .catch(console.error)
+    .finally(() => {
+      console.log('- - 경기 종료 - -');
+    });
+    
+    
+    
+    //🚩 정아 도착 - 1.0801407471925275초
+    //💣 정아 꽝!
+    //- - 경기 종료 - -
+    //🚩 길돈 도착 - 1.1205264261618435초
+    //🚩 영희 도착 - 1.248736503487603초
+    //🚩 철수 도착 - 1.402315335294787초
+    //🚩 돌준 도착 - 1.4806423943234441초
+    ```
+
+
+
+
+
+### async & await 함수
+
+async 함수
+
+* 프로미스를 기반으로 동작한다
+
+  * async 함수 내부에 await가 없는 경우, 동기 함수와 결과가 차이가 없게 된다.
+
+    * 아래의 코드를 실행 시, 동기적으로 실행되었음을 확인할 수 있다.
+
+    * ```javascript
+      function getMult10Promise (number) {
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            resolve(number * 10);
+          }, 1000);
+        });
+      }
+      
+      async function doAsyncWorks () {
+        console.log("1st");
+        const result1 = getMult10Promise(1);
+        console.log(result1);
+      
+        console.log("2nd");
+        const result2 = getMult10Promise(2);
+        console.log(result2);
+      
+        console.log("3rd");
+        const result3 = getMult10Promise(3);
+        console.log(result3);
+        
+        console.log("4th");
+      }
+      
+      doAsyncWorks();
+      console.log('💡 이 문구가 먼저 출력됨');
+      
+      
+      //1st
+      //Promise {<pending>}
+      //2nd
+      //Promise {<pending>}
+      //3rd
+      //Promise {<pending>}
+      //4th
+      //💡 이 문구가 먼저 출력됨
+      ```
+
+  * Promise 객체를 return 하는 함수를 호출할 때, await를 붙이지 않으면 Promise 객체가 반환된다.
+
+    * 반면, await를 붙이게 되면, Promise 객체 내부의 PromiseResult 슬롯의 값이 반환된다.
+
+      * 이 때, 반환되기까지 시간이 얼마간 걸리며, 이 과정은 비동기로 실행된다.
+
+        => 자바스크립트의 실행 스레드는 그대로 다른 코드를 실행하게 된다.
+
+      * 중요한 점은, async 내부 코드 전체가 비동기적으로 실행되지 않고, 맨 첫번째 await 직전까지는 동기적으로 실행됨을 알 수 있다.
+
+      ```javascript
+      function getMult10Promise (number) {
+        return new Promise((resolve, reject) => {
+          setTimeout(() => {
+            resolve(number * 10);
+          }, 1000);
+        });
+      }
+      
+      async function doAsyncWorks () {
+        console.log("1st");
+        const result1 = await getMult10Promise(1);
+        console.log(result1);
+      
+        console.log("2nd");
+        const result2 = await getMult10Promise(2);
+        console.log(result2);
+      
+        console.log("3rd");
+        const result3 = await getMult10Promise(3);
+        console.log(result3);
+        console.log("4th");
+      }
+      
+      doAsyncWorks();
+      console.log('💡 이 문구가 먼저 출력됨');
+      
+      
+      
+      //1st
+      //💡 이 문구가 먼저 출력됨
+      //10
+      //2nd
+      //20
+      //3rd
+      //30
+      //4th
+      ```
+
+* try - catch를 이용하여, reject된 경우, reject된 인수를 넘겨받아 실행할 수 있다.
+
+  ```javascript
+  // 빌린 금액으로 약속을 하는 함수
+  function moneyLend (borrow) {
+    return new Promise((resolve, reject) => {
+      console.log(`채무 ${borrow}만원`);
+  
+      setTimeout(() => {
+        if (Math.random() < 0.1) {
+          reject('채무자 파산');
+        }
+  
+        resolve(borrow * 1.1);
+      }, 1000);
+    });
+  }
+  
+  async function lend5times () {
+    try {
+      const lend1 = await moneyLend(20);
+      const lend2 = await moneyLend(lend1);
+      const lend3 = await moneyLend(lend2);
+      const lend4 = await moneyLend(lend3);
+      const lend5 = await moneyLend(lend4);
+  
+      console.log(`💰 반납 ${lend5}만원`);
+    } catch (msg) {
+      console.error(msg);
+    } finally{
+      console.log('- - 대금업 종료 - -');
+    }
+  }
+  
+  lend5times();
+  
+  //채무 20만원
+  //채무 22만원
+  //채무 24.200000000000003만원
+  //채무자 파산
+  //- - 대금업 종료 - -
+  ```
+
+* 릴레이를 할 때, 제한시간 내로 돌아오지 못하면 실패 메시지가 뜨게 하는 코드도 async-await 를 활용해서 짤 수 있다. 
+
+  ```javascript
+  const DEADLINE = 1400;
+  
+  function getRelayPromise (name, start, failMsg) {
+    console.log(`👟 ${name} 출발`);
+  
+    // 💡 랜덤 시간만큼 달리고 결과를 반환하겠다는 약속을 만들어 반환
+    return new Promise((resolve, reject) => {
+      const time = 1000 + Math.random() * 500;
+  
+      setTimeout(() => {
+        if (time < DEADLINE) {
+          console.log(`🚩 ${name} 도착 - ${(start + time)/1000}초`);
+          resolve(start + time);
+  
+        } else {
+          console.log(failMsg);
+          reject((start + time) / 1000);
+        }
+      }, time);
+    })
+  }
+  
+  async function relay5 () {
+    try {
+      const time1
+       = await getRelayPromise('철수', 0, '철수부터 광탈입니다. ㅠㅠ');
+  
+      const time2
+       = await getRelayPromise('영희', time1, '영희가 완주하지 못했네요.');
+  
+      const time3
+       = await getRelayPromise('돌준', time2, '돌준이 분발해라.');
+  
+      const time4
+       = await getRelayPromise('정아', time3, '정아에게 무리였나보네요.');
+  
+      const time5
+       = await getRelayPromise('길돈', time4, '아아, 아깝습니다...');
+  
+    } catch (msg) {
+      console.log(`😢 완주 실패 - ${msg}초`);
+    } finally {
+      console.log('- - 경기 종료 - -');
+    }
+  }
+  
+  relay5();
+  
+  
+  //👟 철수 출발
+  //🚩 철수 도착 - 1.3029266242147302초
+  //👟 영희 출발
+  //🚩 영희 도착 - 2.3954508363971065초
+  //👟 돌준 출발
+  //🚩 돌준 도착 - 3.480323119251557초
+  //👟 정아 출발
+  //🚩 정아 도착 - 4.590776739024533초
+  //👟 길돈 출발
+  //🚩 길돈 도착 - 5.9350017665714025초
+  //- - 경기 종료 - -
+  ```
+
+  
+
+### 네트워크 통신에서의 활용
+
+Fetch API
+
+* Web API에서 가져오는 기능으로서, 네트워크로부터 리소스를 받아온다
+
+  * 프로미스 객체를 반환한다.
+  * response.json()을 통해서, response body에 있는 텍스트를 JSON 객체로 변환하여 반환
+
+  ```javascript
+  fetch('https://showcases.yalco.kr/javascript/mockserver/race-result')
+  .then(response => {
+    console.log(response);
+    return response;
+  })
+  .then(response => response.json())
+  .then(console.log);
+  
+  //[{…}, {…}, {…}, {…}, {…}]
+  //0: {runner_idx: 1, record: 1454.3881}
+  //1: {runner_idx: 2, record: 1198.4922}
+  //2: {runner_idx: 3, record: 1404.1087}
+  //3: {runner_idx: 4, record: 1218.7154}
+  //4: {runner_idx: 5, record: 1374.5151}
+  //length: 5
+  //[[Prototype]]: Array(0)
+  ```
+
+  ```JAVASCRIPT
+  fetch('https://WRONG-ADDRESS')
+  .then(response => response.json())
+  .then(console.log)
+  .catch(msg => {
+    console.error(`😳 에러 발생: ${msg}`)
+  })
+  .finally(() => {
+    console.log('- - 통신 종료 - -')
+  })
+  
+    
+  // GET https://wrong-address/ net::ERR_NAME_NOT_RESOLVED
+  // 😳 에러 발생: TypeError: Failed to fetch
+  // - - 통신 종료 - -
+  ```
+
+* 아래의 예시에 대해, Promise로도 구현이 가능하며, async와 await를 활용해서도 구현이 가능하다'
+
+  * 예시
+    * 5명의 경기 결과를 받아와서, 1등을 선별한다
+    * 1등의 학교 정보에 대해 구체적으로 출력
+
+  * 프로미스 형태로 구현
+
+  ```javascript
+  const SERVER_URL = 'https://showcases.yalco.kr/javascript/mockserver/';
+  
+  fetch(SERVER_URL + 'race-result')
+  .then(result => result.json())
+  .then(arry => {
+    return arry.sort((a, b) => {
+      return a.record - b.record
+    })[0].runner_idx
+  })
+  .then(winnerIdx => {
+    return fetch(`${SERVER_URL}runners/${winnerIdx}`)
+  })
+  .then(result => result.json())
+  .then(({school_idx}) => school_idx)
+  .then(schoolIdx => {
+    return fetch(`${SERVER_URL}schools/${schoolIdx}`)
+  })
+  .then(result => result.json())
+  .then(console.log)
+  .catch(console.error);
+  ```
+
+  * async와 await로 구현
+
+  ```javascript
+  const SERVER_URL = 'https://showcases.yalco.kr/javascript/mockserver/';
+  
+  async function getResult() {
+      //총 결과를 가져온다.
+      //그 중, 점수가 가장 높은 사람을 선별하여 1등 식별자를 얻어낸다
+      //1등 식별자를 토대로 1등에 대한 구체적인 정보를 얻어낸다 => 이 중, 학교 식별자를 얻어낸다.
+      //학교 식별자를 토대로 학교 정보를 얻어서, 출력
+      const totalResult = await fetch(`${SERVER_URL}race-result`)
+          .then(result => result.json())
+          .then(arr => {return arr.sort((a,b) => {return a.record - b.record})[0].runner_idx})
+          .then(winnerIdx => fetch(`${SERVER_URL}runners/${winnerIdx}`))
+          .then(result => result.json())
+          .then(({school_idx}) => school_idx)
+          .then(schoolIdx => {return fetch(`${SERVER_URL}schools/${schoolIdx}`)})
+          .then(result => result.json())
+          .then(console.log)
+          .catch(console.error);
+  }
+  
+  
+  getResult();
+  ```
+
+  
+
+## HTML 코드 파일 다루기
+
+### HTML에 불러오는 방법들
+
+일반적인 방법으로는, 동기적으로 HTML 파일을 파싱하므로, 아래와 같이 (HTML 요소를 활용한) JS파일을 HTML 파일 뒷부분에 명시해두면 에러가 발생한다.
+
+```html
+<!-- index.html -->
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <title>제대로 파는 자바스크립트</title>
+  <script src="./src/script.js"></script>
+</head>
+<body>
+  <span>변경 전...</span>
+</body>
+</html>
+```
+
+```javascript
+//script.js
+//위치 : ./src/script.js
+
+document.querySelector('span').innerText = '텍스트 변경됨';
+```
+
+* 위의 html 파일을 실행하게 되면, (브라우저의 콘솔창에) 아래와 같이 뜨게 된다.
+
+  ```javascript
+  Uncaught TypeError: Cannot set properties of null (setting 'innerText')
+      at script.js:1:42
+  ```
+
+  * (내 생각) 이미 innerText 라는 프로퍼티는, document.querySelector 의 프로퍼티로서 이미 가지고 있지 않았나 생각된다. (왜냐하면, 프로퍼티의 값이 null이라고 떠있기 때문)
+
+* 따라서, `<script src="./src/script.js"></script>` 을 body 요소의 맨 아래 부분에 배치하면 해결은 되지만, 정답은 아니다.
+
+  * 왜냐하면, 애초에 `<script src="./src/script.js"></script>` 는, head 요소에 넣으라고 만든 태그이기 때문이다
+
+    => onload 이벤트를 활용하면 되기는 하지만, 동기적이라는 한계가 존재. 
+
+    (즉, 비록 실행은 맨 나중에 되어서 로직적으로는 문제가 생기지 않지만, js파일이 크다면, 로딩하는 동안 여전히 아래의 요소들은 파싱이 되지 않는다.)
+
+    ```html
+    <!-- index.html -->
+    
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <title>제대로 파는 자바스크립트</title>
+      <script src="./script.js"></script>
+    </head>
+    <body>
+      <span>변경 전...</span>
+    </body>
+    </html>
+    ```
+
+  * ```javascript
+    //script.js
+    //위치 : ./src/script.js
+    
+    window.onload = function() {
+    	document.querySelector('span').innerText = '텍스트 변경됨';
+    }
+    ```
+
+
+
+
+
+
+HTML 파싱
+
+* 기본적으로, HTML 파일은 동기적으로 파싱한다.
+
+  * 따라서, body요소보다 스크립트가 먼저 로드되는 경우, 변수에 원치 않은 데이터가 저장될 수 있다.
+
+    * 이 경우, 기본적으로 스크립트를 맨 뒤로 쓰면 해결되는 문제이다.
+
+    * 혹은, 스크립트를 비동기적으로 실행하게 하여, 스크립트를 로딩하는 도중에도 html 파싱이 지속해서 일어나도록 한다.
+
+      => defer, async 방식을 사용하거나, onload 방식이 존재한다
+
+    * onload 방식은, window객체의 onload 메서드를 오버라이딩 함으로서 구현된다
+
+      * onload함수 자체가, 문서가 사용되는 시점에 실행된다는 특징을 활용한 것이다.
+
+        => script가 먼저 로딩이 되더라도, script의 실행은 맨 나중으로 되므로 원하는 의도대로 구현이 된다.
+
+      * 출처
+
+        * https://velog.io/@leyuri/javaScript-window.onload%EB%9E%80
+
+      * 하지만, onload 방식 역시 동기적이라는 한계점이 존재.
+
+    * async, defer 방식은 비동기적으로 스크립트를 로딩하는 점이 공통적이나, 실행 시점에서 차이를 보인다.
+
+      * async 방식은 (비동기적인) 스크립트의 로딩이 끝나자마자 스크립트가 실행이 된다
+
+        * 이 때, 스크립트가 실행되는 동안은 html 파싱이 멈춘다.
+
+        * async 속성이 붙은 script는 페이지와 완전히 독립적으로 동작하므로, html에서 async 스크립트의 배치 순서대로 script가 실행이 되지는 않는다.
+
+          => 길이가 짧은 async script가 맨 아래에 배치되는 경우, 이것이 가장 먼저 실행될 수 있다는 의미이다.
+
+        * 따라서, DOM을 조작하는 코드가 async script에 존재한다면, 원하지 않은 결과를 얻을 수 있다.
+
+      * 반면, defer 방식은, (비동기적인) 스크립트의 로딩이 끝나도 스크립트의 실행이 지연되며, html의 파싱이 끝나고 나서야 비로소 실행이 된다.
+
+        * defer 속성이 붙은 script는 html에서의 defer 스크립트 배치 순서대로 실행이 된다. (html 페이지와 defer 스크립트는 의존관계에 있다는 의미로 해석할 수 있다.,)
+
+      * 출처
+
+        * https://ko.javascript.info/script-async-defer
+
+* 참고
+
+  * 자바스크립트는, 기본적으로 싱글 스레딩이다.
+
+    * 자바스크립트에서 비동기 처리를 하는 코드를 짜더라도, 처리 순서에 차이가 있을 뿐 사실 주요 로직은 싱글 스레드에서 처리가 되기 때문이다.
+
+      => 자바스크립트에서도 멀티 스레드 코드를 짜게끔 하기 위해, "웹 워커" 라는 개념이 도입되었다.
+
+    * 출처
+
+      * https://inpa.tistory.com/entry/%F0%9F%8C%90-js-async#%EB%B8%8C%EB%9D%BC%EC%9A%B0%EC%A0%80%EC%9D%98_%EB%B9%84%EB%8F%99%EA%B8%B0_%EC%B2%98%EB%A6%AC
+      * https://www.zerocho.com/category/HTML&DOM/post/5a85672158a199001b42ed9c
+
+
+
+### 모듈과 라이브러리
+
+html 페이지에서, 모듈을 활용하지 않고 자바스크립트 파일을 (비동기적으로) 활용하게 되면 아래의 문제가 발생한다
+
+* 여러개의 script 파일로 나누어 작성하더라도, 결국 하나의 큰 파일을 작성하는 것과 다를 바가 없어진다
+  * 각각의 파일에서는, 같은 변수명이나 상수를 사용하지 못한다.
+  * 또한, 이로부터, 다른 파일에 있는 변수명에 저장된 값을 원치 않은 의도로 조작이 될 수 있음을 알 수 있다. 
+  * 각각의 파일이 의존적이므로, html에서 스크립트 파일 코드를 작성 시, 파일의 순서를 신경써야만 한다.
+* => 결국, 모듈을 활용하여 위의 문제를 해결하여야 한다. 
+
+
+
+모듈 활용 예시
+
+* html 문서에 로드하고자 하는 모듈을 명시한다. (모듈 A 라고 하자)
+
+  * 이 때, 모듈 A는 자동으로 defer로 로드된다.
+  * 해당 모듈 A는, 다른 모듈 B의 변수의 값을 읽어올 수 있으며, 이는 export / import를 활용해서 이루어진다.
+    * 이 때 B는 html 문서에 명시할 필요는 없다.
+    * B에서 변수에 대해 export 하여 다른 모듈에서 해당 변수를 읽어들이게끔 하고, A에서는 import 하여 해당 변수의 값을 읽어들인다. (이 값을 다른 변수로 naming 해서 받아들일 수도 있다 => 식별자 중복 방지)
+
+  ```html
+  <!-- index.html -->
+  
+  <!DOCTYPE html>
+  <html lang="ko">
+  <head>
+    <title>제대로 파는 자바스크립트</title>
+  
+    <!-- 💡 모듈로서 로드 -->
+    <script type="module" src="./main.js"></script>
+  </head>
+  <body>
+    <script>
+      console.log('모듈은 defer 방식으로 로드됩니다.');
+    </script>
+  </body>
+  </html>
+  ```
+
+  ```javascript
+  <!-- main.js -->
+  
+  import { 
+    x as a,
+    y as b,
+    person as individual
+  } from './module1.js';
+  
+  console.log(a, b);
+  console.log(individual);
+  ```
+
+  ```javascript
+  <!-- module1.js -->
+  
+  export const x = 1;
+  export const y = 2;
+  
+  export const person = {
+    name: '홍길동',
+    age: 20
+  }
+  ```
+
+  
+
+* import 하는 모듈에서, 모든 객체를 다 읽어들일 수 있으므로 아래의 예시 또한 가능하다.
+
+  * 아래의 eagle객체는, Bird 클래스를 import 하지 않았음에도 Bird에 있는 기능을 사용할 수 있따
+
+    * 다만, Bird 클래스를 활용해 객체를 생성하는 코드는 허용되지 않는다. (실험 결과임)
+
+      => 이 부분은, Eagle 객체 생성 전이나 후나 동일하게, Bird 클래스만을 활용해서 객체를 생성하는 것은 허용되지 않았다.
+
+      => (내 생각) 일단 모듈 module3.js 전체 코드가 메모리에 올라는 가는데, main.js에서 "문법적으로" 접근하는 것이 막혀있는 듯 하다. (low level 관점에서.... 바라본 내 생각임.)
+
+
+  ```javascript
+<!-- module1.js -->
+
+export const x = 1;
+export const y = 2;
+
+export const person = {
+  name: '홍길동',
+  age: 20
+}
+  ```
+
+  ```javascript
+<!-- module2.js -->
+
+export const add = (a, b) => a + b;
+export const subt = (a, b) => a - b;
+export const mult = (a, b) => a * b;
+export const div = (a, b) => a / b;
+  ```
+
+  ```javascript
+<!-- module3.js -->
+
+export class Bird {
+  constructor (name, sound) {
+    this.name = name;
+    this.sound = sound;
+  }
+  fly () {
+    console.log(`${this.name} ${this.sound} 비행중`);
+  }
+};
+
+export class Eagle extends Bird {
+  constructor (name, sound, prey) {
+    super(name, sound);
+    this.prey = prey;
+  }
+  hunt () {
+    console.log(`${this.name} ${this.prey} 사냥중`);
+  }
+};
+  ```
+
+  ```javascript
+<!-- main.js -->
+
+// 💡 필요한 것만 선별하여 가져오기
+import { x, y } from './module1.js';
+import { add, mult } from './module2.js';
+import { Eagle } from './module3.js';
+
+console.log(
+  add(x, y), mult(x, y)
+);
+
+const eagle = new Eagle('독돌이', '푸드덕', '토끼');
+eagle.hunt();
+  ```
+
+* 다른 모듈에 있는 것을 선별해서 가져오는 것이 아니라, 통째로(하나의 모듈 객체로) 묶어서 가져올 수 있다.
+
+  ```javascript
+  <!-- module4.js -->
+  
+  export const isOdd = x => x % 2;
+  export const square = x => x ** 2;
+  
+  export function logResult (result) {
+    console.log(
+      `결과는 ${result}입니다.`
+    );
+  };
+  ```
+
+  ```javascript
+  <!-- main.js -->
+  import * as funcs from './module4.js';
+  
+  // 💡 로그 살펴볼 것!
+  console.log(funcs);
+  
+  funcs.logResult(
+    [1, 2, 3, 4, 5, 6, 7, 8, 9]
+    .filter(funcs.isOdd)
+    .map(funcs.square)
+    .join(', ')
+  );
+  ```
+
+* default를 사용하여, 다른 모듈에서 참고할 수 있도록 할 수도 있다.
+
+  ```javascript
+  // 💡 default를 사용하면 let, const 사용 불가
+  // main.js에서 mod5 변수로서 받을 것이다.
+  export default {
+    x: 1,
+    arry: [1, 2, 3, 4, 5],
+    obj: {
+      a: true,
+      b: false
+    },
+    isEven: x => !(x % 2),
+  };
+  
+  export let z = 4444;
+  ```
+
+  ```javascript
+  <!-- main.js -->
+  //mod5로서 default 객체를 받아들인다.
+  import mod5 from './module5.js';
+  
+  console.log(mod5);
+  
+  console.log(
+    mod5.arry
+    .filter(mod5.isEven)
+    .join(', ')
+  );
+  ```
+
+* node.js에서 모듈을 사용하고자 할 때에는 아래와 같이 활용하자
+
+  * package.json에 아래의 type 항목을 추가
+
+    => 이는, module에서 통용되는 export / import 문법을 사용할 수 있게 해 준다.
+
+    ```javascript
+    {
+      "type": "module"
+    }
+    ```
+
+  * package.json은, 프로젝트의 메타 정보를 담고 있다.
+
+    * json 형식으로 작성 
+
+    * 의존성 관리, 스크립트 정의, 기타 설정 등을 할 수 있다.
+
+    * 이 때, 모듈 타입을 지정할 수 있으며, type 속성을 통해서 ES6 모듈 시스템을 사용함을 지정할 수 있다.
+
+      => 이렇게 되면, import / export 코드로 짠 javascript 파일이 실행이 가능해진다.
+
+    * 참고
+
+      * https://beomy.github.io/tech/etc/package-json/
+
+
+
+
+
+
+
+참고
+
+* 실험을 통해 알아낸 경우는 아래와 같다
+
+  * 하나의 HTML 페이지에 2개 이상의 모듈을 쓸 수 있다.
+
+  * (잘 안 쓰이겠지만) 1개의 모듈 페이지가 다른 (모듈 아닌) 스크립트의 파일을 참조할 수 있다. (별도의 export, import 를 (모듈 아닌) 스크립트 파일에 명시하지 않고도 가능하다)
+
+    * 참고) 아래 html 페이지에서, script 코드의 순서를 뒤바꾸면 tt 변수를 읽어들이지 못 한다.
+
+    ```html
+    <!-- index.html -->
+    
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <title>제대로 파는 자바스크립트</title>
+      <script defer src="./script1.js"></script> <!-- 모듈이 아닌 자바스크립트 파일-->
+      <script type="module" src="./test2.js"></script>
+      <!--위의 script 순서를 바꿔서 작성하면 tt 변수를 읽어들이지 못함 -->
+    </head>
+    <body>
+    </body>
+    </html>
+    ```
+
+    ```javascript
+    <!-- script1.js -->
+    const tt = 1;
+    
+    console.log(tt);
+    ```
+
+    ```javascript
+    <!-- test2.js -->
+    import {a,b} from './main.js';
+    
+    console.log(tt);
+    
+    console.log('-------');
+    console.log(a);
+    console.log(b);
+    ```
+
+  * 기본적으로, 하나의 모듈 파일에서 import 하는 모듈 파일은, (로딩이 되지 않았다면) 해당 파일을 로딩과 동시에 실행한다.
+
+    * 이미 로딩이 된 상태라면, 건너뛴다.
+
+    ```html
+    <!DOCTYPE html>
+    <html lang="ko">
+    <head>
+      <title>제대로 파는 자바스크립트</title>
+      <script type="module" src="./script1.js"></script>
+      <script type="module" src="./test2.js"></script>
+    </head>
+    <body>
+    </body>
+    </html>
+    ```
+
+    ```javascript
+    <!-- script1.js -->
+    export const tt = 1;
+    
+    console.log(tt);
+    ```
+
+    ```javascript
+    <!-- test2.js -->
+    
+    import {a,b} from './main.js';
+    import {un} from './test3.js';
+    import {tt} from './script1.js';
+    
+    console.log(tt);
+    
+    console.log('-------');
+    console.log(a);
+    console.log(b);
+    ```
+
+    ```javascript
+    <!-- test3.js -->
+    export const un = 100;
+    
+    console.log(un);
+    ```
+
+    ```javascript
+    //결과
+    
+    1    script1.js:3
+    1 2     main.js:5 
+    {name: '홍길동', age: 20}     main.js:6 
+    100    test3.js:3 
+    1 	test2.js:8 
+    -------   test2.js:10 
+    1 	test2.js:11 
+    2 	test2.js:12 
+    ```
+
+    => test2.js에서, import하는 순서대로 자바스크립트 파일이 실행이 되었음을 알 수 있다. 
+
+
+
+### 웹팩과 바벨
+
+웹팩
+
+* 다수의 파일(js, html, css, png 등)을 하나 또는 소수의 파일들로 압축
+
+  => 하나의 파일로 번들링한다고 한다.
+
+  => entry, output 등의 속성을 활용하여 원하는 번들링을 할 수 있다.
+
+  * 여러가지 파일을 하나로 압축하므로, http 요청 수가 줄어들어서, 네트워크 환경이 다소 느리더라도 웹사이트 로딩 속도가 최적화 된다는 장점이 있다.
+  * 참고
+    * https://myung-ho.tistory.com/98
+
+* webpack.config.js 파일에서 작성하게 되며, 보통 commonJS 형식으로 쓰인다.
+
+  * 때문에, ES6 모듈 시스템을 사용하지 않아도 되므로 package.json 파일에서 `{"type" : "module"}` 항목을 제거해도 된다.
+    * (의문 사항) - 제거하지 않으면 에러가 발생하던데, 저 type 속성이 결국에는 commonJS랑 ES6 모듈 시스템이랑 양자택일해서 읽는? 시스템인지 싶다.
+  * 결국, 웹팩이 build 역할을 하게 되는 것이므로, 프로젝트 메타파일(package.json)에서 "빌드는 webpack.config.js"에서 이루어짐을 명시해주는 코드가 있어야 한다.
+  * (강의 내용으로 최종 요약)
+    * webpack.config.js에서 require 방식을 쓰기 때문에, `{"type" : "module"}` 를 제거하면 webpack.config.js에서 require 방식을 적용하게 되고, 명시되어 있는 코드대로 (=모듈 방식으로) 번들링을 진행하게 된다.
+
+* 주요 과정은 아래와 같다
+
+  * 소스저장소(src폴더)를 만들고, 모든 소스 파일을 해당 폴더로 이동.
+
+  * 웹팩 관련 모듈 설치
+
+  * 웹팩 설정 파일 작성 (주요사항 작성 예시)
+
+    ```javascript
+    //webpack.config.js
+    
+    const path = require('path'); //path 모듈을 가져온다.
+    
+    module.exports = {
+      entry: './src/main.js',
+      output: {
+        filename: 'main.js',
+        path: path.resolve(__dirname, 'dist'), //배포되는 파일. 즉, main.js와 main.js가 필요한 모듈들이 하나의 파일로 번들링되는 폴더를 의미
+      },
+    
+      // 💡 추가설정들
+      watch: true, // 파일 수정 후 저장시 자동으로 다시 빌드
+      experiments: {
+        topLevelAwait: true // 모듈 await 가능하도록
+      }
+    };
+    ```
+
+    
+
+  * 빌드 명령
+
+    * npm run build를 통해서 실행
+
+    * 이 때, package.json에서, webpack.config.js를 참조하는 코드가 없다면, 이 코드를 추가하기.
+
+      * `"scripts": {    "build": "webpack"  }` 
+
+    * 배포된 파일의 코드를 javascript beautifier 에 넣고 돌리면, 원래 코드와 유사한 코드가 등장한다.
+
+      (더러운 코드가 되는 이유는, 번들링 과정에서 역으로 해석(?) 하는 것을 방지하기 위해서이다)
+
+* 웹팩 관련 추가 참고사항
+
+  * 주요 속성 (entry, output, loaders, plugins ...)
+    * https://dev-chim.tistory.com/entry/Webpack-webpackconfigjs
+    * https://velog.io/@suyeon9456/Webpack
+
+
+
+바벨
+
+* 자바스크립트를 보다 더 오래된 환경에서도 동작하는 버전으로 컴파일하는 모듈
+
+* 따라서, 아래의 과정으로 실행하는 것이 큰 그림이다.
+
+  * 바벨 관련 모듈 설치
+
+  * webpack.config.js에 설정 추가 (위 바벨 관련 모듈을 사용하겠다는 설정)
+
+    => 1개 파일 각각에 대해서 바벨을 적용해도 되지만, 궁극적으로는 "웹팩"을 통해 번들링된 파일에 대해 바벨을 적용하는 것이 보다 더 현명할 것이다.
+
+    * 예시
+
+      ```javascript
+      const path = require('path');
+      
+      module.exports = {
+        entry: './src/main.js',
+        output: {
+          filename: 'main.js',
+          path: path.resolve(__dirname, 'dist'),
+        },
+      
+        // 💡 추가설정들
+        watch: true, // 파일 수정 후 저장시 자동으로 다시 빌드
+        experiments: {
+          topLevelAwait: true // 모듈 await 가능하도록 (원래는 브라우저상에서만 await 기능을 쓸 수 있었음)
+        },
+      
+        //아래는 바벨 관련 설정
+        target: ['web', 'es5'], // ⭐ ES5 이하로 해야 할 시 필요
+        module: {
+          rules: [
+            {
+              test: /\.m?js$/,
+              exclude: /node_modules/,
+              use: {
+                loader: 'babel-loader',
+                options: {
+                  presets: [
+                    ['@babel/preset-env', { targets: "ie 11" }]
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      };
+      ```
+
+  * 빌드하고 결과 확인
+
+
+
+### JSDoc
+
+자바스크립트 코드에 주석을 달기 위한 마크업 언어
+
+* 그리고 해당 주석을 활용하여, API 문서를 생성할 수 있다. API 문서를 생성하기 위해 보통 사용한다
+
+* 웬만한 에디터는, JSDoc 기능을 제공하므로, /** 를 치게 되면 JSDoc 기능을 사용할 수 있는 주석 기능을 활용할 수 있다.
+
+  * 해당 주석을 근거로, 에디터에서는 hinting을 제공한다
+
+* 예시
+
+  ```javascript
+  /** 
+   * 코드의 제목으로 사용될 문자열
+   *  
+   */
+  const TITLE = 'JSDoc 사용하기';
+  
+  /**
+   * 원주율
+   * @type {number}
+   * @const
+   */
+  const PI = '3.14';
+  
+  
+  /**
+   * 함수 예시
+   * 
+   * @param {number} x 
+   * @param {number} y 
+   * @returns {number} 두 수의 합
+   */
+  const add = (x, y) => x + y;
+  
+  
+  /**
+   * 추후 주석에서 PersonObj 객체가 등장하면, 해당 객체가 무엇인지 나타내주는 역할을 수행.
+   *  - 주석을 지우게 되더라도, hinting에는 영향이 없다.
+   * 
+   * @typedef {Object} PersonObj 사람 객체
+   * @property {string} name 이름
+   * @property {number} age 나이
+   * @property {boolean} married 기혼여부
+   */
+  
+  /**
+   * 
+   * @param {string} name 이름
+   * @param {number} age 나이
+   * @param {boolean} married 기혼여부
+   * @returns {PersonObj}
+   */
+  function getPersonObj (name, age, married) {
+    return {name, age, married}
+  }
+  
+  
+  
+  /**
+   * 사람 객체 생성 함수
+   * @constructor 
+   * @param {string} name 
+   * @param {number} age 
+   */
+  function Person (name, age) {
+    this.name = name;
+    this.age = age;
+  }
+  
+  
+  /**
+   * 새 클래스
+   * @class
+   */
+  class Bird {
+    /**
+     * @constructs
+     * @param {string} name 
+     */
+    constructor (name) {
+      this.name = name;
+    }
+  }
+  
+  
+  /**
+   * 개선사항이 필요할 때, (개발자들이) 활용함
+   * @todo 실행 속도 개선 필요
+   */
+  function slowFunction () {
+    console.log('느릿느릿');
+  }
+  
+  
+  /**
+   * @see {@link https://www.yalco.kr} 얄코사이트 참조
+   */
+  function yalcoFunc () {
+    // ...
+  }
+  
+  /**
+   * @readonly
+   * @const {string}
+   */
+  const READONLY = '건들지 마라';
+  
+  
+  /**
+   * @deprecated 버전 3부터 안 씀
+   */
+  function oldFunction () {
+    console.warn('왜 실행했어요?');
+  }
+  
+  
+  ```
+
+* 이후, jsdoc API 생성 모듈을 다운받은 후, 해당 모듈을 통해 생성된 html 파일을 브라우저에 띄우자
+
+  * 그것이 바로 Jsdoc API 문서라고 할 수 있다.
+
+
+
+
+### 디버깅
+
+일반적으로, 디버깅 설정을 하려면, launch.json을 조작하면 된다. 
+
+
+
+launch.json 기본
+
+```javascript
+{
+  // IntelliSense를 사용하여 가능한 특성에 대해 알아보세요.
+  // 기존 특성에 대한 설명을 보려면 가리킵니다.
+  // 자세한 내용을 보려면 https://go.microsoft.com/fwlink/?linkid=830387을(를) 방문하세요.
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "localhost에 대해 Chrome 시작",
+      "url": "http://localhost:8080",
+      "webRoot": "${workspaceFolder}"
+    }
+  ]
+}
+```
+
+출처 : https://terrorjang.tistory.com/entry/VSCode-Javascript-%EB%94%94%EB%B2%84%EA%B9%85
+
+
+
+
+
+주요내용 정리
+
+* debug console에서, 중간중간에 x의 값을 변경하여 로직을 진행할 수 있다.
+
+* 디버깅으로, Exception을 체크할 수도 있다. Uncaught Exception 과 Caught Exception 둘 다 체크가 가능하다.
+
+(큰 팝업 화면으로 체크가 됨)
+
+* 조사식(watch)에서, 참고하고자 하는 변수를 활용하여, 식을 만들어서 대입하면, 해당 식의 값을 디버깅 과정에서 관찰할 수 있다.
+
+* 중단점을 구체화하여, 아래와 같이 설정이 가능하다
+
+  * 조건부 중단점, hit count
+
+    => 특정 조건을 만족했을 때에만, 중단되게끔 할 수 있다.
+
+    => 또한, for문 내부에서, 해당 코드가 일정 횟수 이상 반복되면, 해당 코드에 대해 중단되도록 할 수 있다. 
+
+
+
+
+
+* 브라우저 디버깅은, 새로고침을 함으로서 실행이 되며, 이 때 breakingPoint는 브라우저 자체적으로 기억하는 듯하다. (이 때 line number로서 기억을 하는 듯 하다)
+  * 브라우저 상에서 코드를 바꾼 후, 다시 새로고침을 하게 되면, 이전에 지정한 breakingPoint 의 line number 상에 breaking point가 걸려 있는 것을 확인할 수 있다. 
+
+
+
+
+
+나의 의문사항
+
+* 아래와 같이, export 가 들어가있는 코드는 디버깅이 실행되지 않더라. export를 뺴니까 debugging이 동작하더라.
+
+  * 이유는 정확히 모르겠음..... 다만, 이러한 현상이 있다는 점은 인지하고 있을 것.
+
+  ```javascript
+  //디버깅이 동작하지 않음
+  export const ppppp =331313131;
+  const un = 100;
+  
+  const pn = 3;
+  pn += 5500;
+  un += 44000;
+  
+  console.log(un);
+  ```
+
+  
+
+  ```javascript
+  //breaking point를 걸면, 디버깅이 동작한다. 
+  const un = 100;
+  
+  const pn = 3;
+  pn += 5500;
+  un += 44000;
+  
+  console.log(un);
+  ```
+
+  
+
+
+
+
+
+## 웹페이지에 활용하기
+
+### DOM의 개념
+
+document는 브라우저의 객체이므로, node.js에서는 출력되지 않는다.
+
+=> 브라우저의 콘솔에 출력하면, DOM 관점으로 출력된다.
+
+=> 자바스크립트 상으로는, children (또는 childNodes) 프로퍼티에 자식 요소가 유사배열에 담긴 형태로 DOM 구조가 구현되어 있다.
+
+
+
+아래의 코드는, 각 요소의 족보를 확인하는 코드이다.
+
+=> 코드의 대략적인 순서도는 아래와 같다.
+
+* document 자기 자신에 대한 족보를 출력한다.
+
+* document의 모든 자식 요소를 "남김없이" 추출해낸다. 
+  * 각각의 자식 요소마다, 해당 요소의 족보를 출력한다.
+
+```javascript
+function listAncestors(obj) {
+    let parentNode = obj;
+    let answer = [];
+    while(parentNode){
+        answer.push(parentNode.constructor.name);
+        parentNode = Object.getPrototypeOf(parentNode);
+    }
+    
+    return answer.join(', ');
+}
+
+function printAncestors(node) {
+    console.log(listAncestors(node));
+    for(child of node.children) {
+        printAncestors(child);
+    }
+}
+
+printAncestors(document);
+```
+
+
+
+
+
+
+
+### 요소 선택과 탐색
+
+주요 참고사항
+
+* 변수명 앞에 $를 포함되어 있다면, (관례적으로) 해당 변수에는 html 요소가 포함되어있다는 것을 나타낸다.
+
+* html상에서 라인마다 태그를 쓸 때, 자동으로 발생하는 textNode는 아래의 성질을 지닌다
+
+  * html body 상에서 각 태그의 맨 앞 빈 공간을 의미한다. (textContent를 보면, "\n     "  으로 되어 있음을 알 수 있다.)
+
+    => 이는, 태그를 사용하지 않고 그냥 text를 사용했을 때와 구분하기 위해서이다.
+
+* 자식 노드를 검색할 때, 실제로 빈 공백(`\n` ) 까지 포함하는 노드까지 검색하는 방법이 있다. (childNodes 프로퍼티 활용)
+
+  => 실제로, 위 방법대로 모든 노드를 "정확하게" 찾는다면, 웹 페이지의 구조를 정밀하게 파악할 수 있지 않을까 싶다.
+
+  => 바로 위의 "자동으로 발생하는 textNode" 에 관한 내용을 본다면, 이해가 될 것이다.
+
+
+
+document의 메서드와 element의 메서드가 있다.
+
+=> 대게 비슷하나, getElementById()는 document 객체에만 정의된 메서드이다.
+
+
+
+nodelist가 htmlcollection 보다 더 많은 타입을 담을 수 있다고 하는데, 구체적으로 어떻게 다양한 타입을 담는지?
+
+
+
+
+
+
+
+
+
+
+
+
+
+`ul.firstChild` 와 `ul.firstElementChild` 의 차이
+
+* 첫번째 노드를 뽑기 위해 전체 Node를 고민할 때, 모든 Node중 첫번째 Node만 선택하는지(`ul.firstChild`) 아니면 첫번째 ElementNode를 선택하는지(`ul.firstElementChild`)의 차이이다.
+  * `ul.firstChild` 는 빈 공백의 textNode도 포함하기 때문에, ul의 자식 노드인 li노드를 정확하게 선택하기 위해서는 `ul.firstElementChild` 를 활용하는 것이 맞다.
+* 즉, Node의 메서드인지 Element의 메서드인지의 차이이며, return 값도 각각 Node(ElementNode 포함) 와 ElementNode 만이라고 정리할 수 있다.
+
+
+
+
+
+위에서 보듯, 본질적으로 Element의 메서드인지, Node의 메서드인지로 구분되어진다. 
+
+=> 이를 활용해서, 특정 노드 바로 옆의 Node (또는 ElementNode)와 부모 Node(또는 ElementNode) 역시 각각의 경우에 대해 모두 return받을 수 있다. 
+
+```javascript
+const $secondLi = document
+.querySelector('section')
+.querySelector('li:nth-child(2)');
+
+//Node의 메서드
+$secondLi.previousSibling;
+$secondLi.nextSibling;
+//Node의 메서드
+$secondLi.parentNode;
+
+//Element의 메서드
+$secondLi.previousElementSibling;
+$secondLi.nextElementSibling;
+// 💡 역시 Node의 기능 - 부모 노드가 Element일 때만 반환
+$secondLi.parentElement;
+
+//부모 노드에 ElementNode만 존재하는 경우, 아래의 결과는 true임을 알 수 있다.
+$secondLi.parentNode === $secondLi.parentElement;
+```
+
+
+
+### 요소 조작
+
+innerText 대신 textContent를 써야 하는 이유는 아래와 같다.
+
+* css와 같이 숨겨진 요소들에 대한 text도 모두 출력
+* 출처
+  * https://developer.mozilla.org/ko/docs/Web/API/Node/textContent
+  * https://velog.io/@kim_unknown_/JavaScript-Difftext
+
+
+
+nodeValue의 경우는, 텍스트 노드의 경우에서만 해당 노드의 텍스트값을 반환한다.
+
+* 다른 노드의 경우에는, null값을 반환 (textContent와 가장 큰 차이)
+
+  * li 노드 역시 엄연히 element 노드라, li.nodeValue 의 값은 null이 나온다
+
+    => 따라서, nodeValue를 활용하여 li 노드의 text에 접근하고 싶다면, li.firstChild.nodeValue 로서 접근하면 된다.
+
+
+
+className의 경우에는, class에 관해 접근할 수 있다.
+
+=> 이를 활용하여, css 선택자가 먹을 수 있게끔 할 수 있다.
+
+=> 2개 이상의 css 선택자가 적용되도록 할 수도 있다.
+
+
+
+classList의 경우는, class 이름을 DOMTokenList라는 유사배열객체에 반환한다.
+
+=> 해당 배열 객체에 요소를 추가하거나 배제해서, css 선택자가 먹을 수 있게끔 할 수 있다.
+
+
+
+
+
+style은 HTMLElement의 속성이며, 폰트 같은 속성을 적용할 수 있다.
+
+=> 주의해야 할 점은, "인라인으로 정의된 CSS 속성" 에 대해서만 확인/변경이 가능핟.
+
+* html에 css를 입힐 때 3가지 방법이 있으며, 보통 외부 스타일 시트를 사용한다
+* HTMLElement의 style 프로퍼티를 활용하여 CSS 속성을 반영하게 되면, HTML 페이지의 태그 내에서도 해당 내용이 반영됨을 확인할 수 있다.
+  * 즉, 인라인 스타일로 반영됨을 알 수 있다.
+* 출처
+  * https://m.blog.naver.com/dahamee/220501535751
+
+
+
+=> 따라서, 인라인 외의 방식으로 CSS 속성 정보를 확인하고자 한다면, 아래와 같이 하면 된다.
+
+* window.getComputedStyle(요소) 를 적용 시, 해당 요소에 정의된 CSS 속성 정보가 담긴 객체를 얻을 수 있다.
+  * getComputedStyle은 특정 요소의 CSS 속성 정보들을 반환한다.
+    * 특정 요소의 속성 정보에서, 그 요소의 font-size나 opacity나 color 등을 조회할 수 있다.
+  * 조회만 가능하고, 수정은 불가하다. 
+    * (내 생각) 당연한게, CSS를 정의할 수 있는 방법이 3가지인데, 해당 방법에 맞게끔 일일이 수정하기는 힘들것으로 생각된다.
+
+
+
+
+
+
+
+getAttribute, setAttribute 메서드는 요소의 속성을 조회/변경하는 기능을 수행
+
+
+
+
+
+value와 checked는 input 요소의 기능으로서
+
+* document.querySelctor() 작성 시, 매개변수는 CSS 속성 조회 문법을 따른다. (querySelector 메서드 자체가 CSS 속성 조회 문법을 따른다.) 
+  * `document.querySelector('input[name=message]')` 역시 매개변수를 보면, CSS 속성 조회 문법을 따른 것이다.
+  * 출처
+    * https://duknock.tistory.com/16
+
+
+
+
+
+(element).innerHTML 은 내부의 자식 요소들을 그대로 HTML 형식으로 옮겨놓은 것이다.
+
+* 따라서, (element).innerHTML = '' 로 지정하면, 내부의 자식 요소들이 모두 삭제된다.
+
+* 출처
+  * https://developer.mozilla.org/ko/docs/Web/API/Element/innerHTML
+
+
+
+
+
+
+
+
+
+의문
+
+//`$ul.innerHtml=''` 을 활용하여 내부 요소를 삭제하는 것은 왜 비추천 되는지? (removeChild와 innerHtml을 활용하여 삭제하는 방법 모두, 수동으로 제거해야 한다는 결론을 보았음.)
+
+
+
+
+
+
+
+document에 요소를 생성해서 추가하는 방법
+
+1. `document.createElement()` 를 통해서 요소를 생성한다. (section, ul, li 등등)
+2. `element.appendChild()` 를 통해서, element 요소 내부에 자식 요소를 추가한다. (맨 끝에)
+3. 해당 자식 요소의 속성(textContent, classList 등)을 활용하여, 추가하고자 하는 내용을 입력한다.
+
+
+
+
+
+참고
+
+* XSS 공격
+
+  * 결국, 사용자의 브라우저에 악성 스크립트 코드가 전달되어 실행되게끔 하는 것이 핵심이다. 
+
+  * 아래의 3가지 방법이 있다. 
+
+    * 웹 서버를 활용하는 방법 
+
+      1. 일반적인 웹 서버에 악성 스크립트를 영구적으로 저장하는 방법(stored XSS)
+         * 사용자가 해당 url을 클릭하면 자연스럽게 사용자의 웹 브라우저에 악성 스크립트 실행
+
+      2. 공격자는 사용자에 악성 url을 보내는 방법 (reflected XSS)
+
+         * 해당 url의 쿼리 파라미터에는 악성 스크립트가 작성되어 있다.
+
+         * 사용자가 해당 url을 클릭 시, 서버는 해당 url 쿼리 파라미터를 활용하여 사용자에게 응답하며, 사용자의 웹 브라우저에는 악성 스크립트가 실행됨
+
+    * 웹 서버를 활용하지 않는 방법(DOM based XSS)
+
+      * 서버의 보안과는 상관없이, 웹 브라우저의 취약점을 활용하여 악성 스크립트 실행
+
+        => 즉, 서버로 요청을 보내지 않고, 웹 브라우저의 구조를 변경하는 방식으로 실행된다.
+
+        * 예를 들어, Attacker가 조작된 URL을 순진한 Customer에게 보낸다고 가정하자.
+
+          => 해당 URL은 다음과 같은 구조를 지니게 된다.
+
+          `https://example.com/page#<script>alert('DOM-based XSS!');</script>`
+
+          => 즉, #이후의 부분은 브라우저 자체적으로 반영되는 부분이므로, 해당 부분이 악성 스크립트가 입력되면 서버의 보안이 강력하다고 해도 XSS Attack을 막을 수 없다.
+
+          (서버 입장에서는, #이전 부분까지의 URL만 요청받는다.)
+
+      * reflected XSS와의 가장 큰 차이는, 서버가 XSS Attack에 영향을 끼쳤나의 여부이다.
+
+        * reflected XSS의 경우는 서버의 보안이 취약할 때 발생 가능한 XSS 공격이지만, DOM based XSS의 경우는 서버의 보안과는 관계없이 웹 브라우저의 보안 취약으로 인해 발생 가능한 XSS 공격이다.
+
+        * URL로 XSS Attack 할 때 경우를 예로 들자면, 각각의 XSS 공격에 따라 조작된 URL은 아래와 같이 될 수 있다.
+
+          * reflected XSS
+
+            `https://example.com/search?query=<script>alert('Reflected XSS!');</script>`
+
+          * DOM based XSS
+
+            `https://example.com/page#<script>alert('DOM-based XSS!');</script>`
+
+  * 출처
+
+    * https://maker5587.tistory.com/57
+    * https://berr-my.tistory.com/entry/XSS-%EA%B3%B5%EA%B2%A9
+
+
+
+### 이벤트
+
+
+
+```javascript
+const $button2 = document.querySelector('#button2');
+
+let timeout;
+let interval;
+let countdown;
+
+timeout = 100;
+
+$button2.addEventListener('mouseenter', () => {
+  if (timeout) clearTimeout(timeout); //setTimeout으로 실행할 함수가 있다면, 이를 실행하지 않겠다는 의미. (즉, 해당 이벤트를 2번 입력했을 때, setTimeOut으로 실행할 함수는 1번만 실행되도록 함)
+  console.log(timeout);
+  console.log("----");
+
+  $button2
+  .firstElementChild
+  .textContent = '💣 치워라, 5초 준다';
+
+  timeout = setTimeout(() => {
+    $button2
+    .firstElementChild
+    .textContent = '🔥🔥🔥🔥🔥🔥🔥🔥🔥';
+  }, 5000);
+  console.log(timeout);
+});
+
+console.log("aaaa")
+
+$button2.addEventListener('mouseleave', () => {
+  if (timeout) clearTimeout(timeout); //mouseenter 입력을 받았을 때, 실행되는 setTimeout 의 인자로 받은 함수 실행을 하지 않는다.
+
+  $button2
+  .firstElementChild
+  .textContent = '올리지 말라고 하면 올리지 마라';
+});
+```
+
+* addEventListener() 함수는 비동기 함수로서, 첫번째 인자로 주어진 행동이 들어와야 두번째 인자의 함수가 실행이 된다.
+* clearTimeOut은, setTimeout의 결과물인 식별자(timeOutID)에 대해서 해당 setTimeout() 함수의 매개인자로 받은 함수의 실행을 취소한다.
+
+
+
+
+
+어떠한 칸에 내용들을 입력하고 난 후, 엔터를 치면, 해당 내용들을 ul의 자식요소로서 추가하는 코드
+
+```javascript
+const $ul = document.querySelector('ul');
+const $input2 = document.querySelector('#input2');
+
+$input2.addEventListener('keyup', (e) => {
+  if (e.key !== 'Enter') return;
+
+  $newLi = document.createElement('li');
+  $newLi.textContent = e.target.value;
+  $ul.appendChild($newLi);
+
+  e.target.value = '';
+});
+```
+
+
+
+참고사항
+
+keydown 과 keypress의 차이
+
+* 실행순서는 keydown -> keypress -> keyup 이다.
+* keydown은 "물리적인 키 눌림" 에 반응을 한다면, keypress는 "어떤 키가 눌렸는지"에 반응을 한다
+  * 따라서, keydown은 shift나 ctrl 키를 눌러도 이벤트로 간주하지만, keypress는 영문자나 한글키를 눌려야 이벤트로 간주한다.
+* 출처
+  * https://goodteacher.tistory.com/603
+  * https://dororongju.tistory.com/91
+
+
+
+
+
+change 이벤트를 활용해서, 화면에서 (인풋) 요소의 값이 바뀔 때, 이벤트가 변하도록 짤 수 있다.
+
+* 화면상에서, 아무 동작도 하지 않는 버튼을, js코드를 통해서 동작하게끔 할 수 있다.
+
+```html
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>경주 기록 예제</title>
+  <link rel="stylesheet" href="./02.css">
+  <script defer src="./02.js"></script>
+</head>
+<body>
+
+  <h1>달리기 경주 기록</h1>
+
+  <select id="school">
+    <option value="">전체 학교</option>
+    <option value="근성">근성대</option>
+    <option value="복근">복근대</option>
+    <option value="박력">박력대</option>
+  </select>
+
+  <input type="number" id="grade" value="1" min="1" max="4">
+  <label for="sort">학년 이상</label>
+
+  <input type="checkbox" id="sort">
+  <label for="sort">기록순 정렬</label>
+
+  <table>
+    <thead>
+      <th>번호</th>
+      <th>학교</th>
+      <th>학년</th>
+      <th>이름</th>
+      <th>기록</th>
+    </thead>
+    <tbody id="raceTbody">
+    </tbody>
+  </table>
+  
+</body>
+</html>
+```
+
+```javascript
+//02.js
+
+let raceData;
+getRaceData();
+
+async function getRaceData () {
+  const SERVER_URL = 'https://showcases.yalco.kr/javascript/mockserver/';
+
+  // 경주 기록 받기
+  const raceResult = await fetch(SERVER_URL + 'race-result')
+  .then(result => result.json());
+  console.log('1.', raceResult);
+
+  const runners = [];
+  const runnerIdxs = raceResult
+  .map(itm => itm['runner_idx']);
+
+  // 기록상 주자 번호에 따라 주자들의 정보 받기
+  for (const runnerIdx of runnerIdxs) {
+    const runner = await fetch(`${SERVER_URL}runners/${runnerIdx}`)
+    .then(result => result.json())
+    runners.push(runner);
+  }
+  console.log('2.', runners);
+
+  // 주자들의 학교 번호 중 중복을 거른 뒤 이에 따라 학교 정보 받기
+  const schools = [];
+  const schoolIdxs = [
+    ...new Set(
+      runners.map(itm => itm['school_idx'])
+    )
+  ];
+  for (const schoolIdx of schoolIdxs) {
+    const school = await fetch(`${SERVER_URL}schools/${schoolIdx}`)
+    .then(result => result.json())
+    schools.push(school);
+  }
+  console.log('3.', schools);
+
+  // 세 배열의 객체들을 조인
+  raceData = raceResult
+  .map(result => {
+    const runner = {
+      ...runners
+      .find(({idx}) => idx === result.runner_idx)
+    }
+
+    runner.school = schools
+    .find(({idx}) => idx === runner.school_idx)
+    .name
+
+    delete runner.school_idx;
+    delete runner.idx;
+
+    return {
+      ...result,
+      ...runner
+    }
+  });
+  console.log('4.', raceData);
+
+  fillRaceTable();
+}
+
+function fillRaceTable () {
+
+  // 배열 복사
+  let data = [...raceData];
+
+  const _school = document.querySelector('#school').value;
+  const _grade = document.querySelector('#grade').value;
+  const _sort = document.querySelector('#sort').checked;
+
+  // 인풋 요소의 값들에 따라 필터링 또는 정렬
+  if (_school) data = data.filter(({school}) => school.startsWith(_school));
+  if (_grade) data = data.filter(({grade}) => grade >= _grade);
+  if (_sort) data.sort((a, b) => a.record - b.record);
+
+  // 먼저 tbody 부분을 비움
+  const $tbody = document.querySelector('#raceTbody');
+  while ($tbody.firstChild) {
+    $tbody.removeChild($tbody.firstChild);
+  }
+
+  // tbody 채워넣기
+  data.forEach(datum => {
+    const $newTr = document.createElement('tr');
+
+    ['runner_idx', 'school', 'grade', 'name', 'record']
+    .forEach(itm => {
+      const $newTd = document.createElement('td');
+      $newTd.textContent = datum[itm];
+      $newTr.appendChild($newTd);
+    });
+    $tbody.appendChild($newTr);
+  });
+}
+
+```
+
+
+
+참고할 만한 사항
+
+* 스프레드 문법 적용 시, 아래와 같이 맨 나중의 결과물을 스프레드한다.
+
+```javascript
+raceData = raceResult
+  .map(result => {
+    const runner = {
+      ...runners
+      .find({idx}) =>( idx === result.runner_idx)
+    }
+    //...(runners.find({idx} => (idx === result.runner_idx))) 와 동일하다.
+
+    runner.school = schools
+    .find(({idx}) => idx === runner.school_idx)
+    .name
+
+    delete runner.school_idx;
+    delete runner.idx;
+
+    return {
+      ...result,
+      ...runner
+    }
+  });
+```
+
+
+
+
+
+기타
+
+* 자바스크립트는 기본적으로 싱글 스레드로 동작하는 것이 원칙이다.
+
+  * 따라서, 일반적으로 비동기적으로 코드를 짜더라도, 동기적인 코드에 비해 실행순서만 차이가 있고 실행 시간에는 큰 차이가 없다.
+
+    => 사실상 싱글 스레드로 운용된다고 볼 수 있다.
+
+  * 그러나, 비동기로 실행되는 함수 중, Web API를 활용하는 함수(fetch 등)의 경우는, 실행 순서 뿐 아니라 실행 시간에도 큰 차이가 있다.
+
+    => fetch 함수의 경우에는, 백그라운드에서 네트워크 통신이 이루어지며, 이와 동시에 메인 스레드는 다른 코드를 처리하기 때문이다.
+
+    => 따라서, Web API를 활용하는 함수의 경우, 멀티 스레드로 동작한다고 말할 수 있다.
+
